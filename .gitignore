@@ -1,0 +1,27 @@
+# Python & Environments
+__pycache__/
+*.pyc
+.env
+venv/
+.venv/
+env/
+
+# Data & Models (Achtung: Große Dateien nicht pushen!)
+# Wir erlauben kleine CSVs, aber blockieren fette SQLite/DBs
+*.db
+*.sqlite
+*.sqlite3
+data/raw/
+
+# Logs & Caches
+*.log
+npm_log*.txt
+.pytest_cache/
+.autoclaw/
+.openclaw/
+.autoclaw-attachments/
+results/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
