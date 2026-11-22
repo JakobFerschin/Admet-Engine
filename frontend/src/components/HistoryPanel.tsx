@@ -18,84 +18,80 @@ export default function HistoryPanel({
 }: HistoryPanelProps) {
   return (
     <>
-      {/* Toggle button */}
-      <button
-        onClick={onToggle}
-        className="fixed right-0 top-20 z-40 bg-surface-raised border border-surface-border 
-                   border-r-0 rounded-l-lg px-2 py-3 text-gray-500 hover:text-accent-cyan
-                   transition-all duration-200"
-        title="Analysis History"
-      >
-        <Clock className="w-4 h-4" />
-      </button>
-
-      {/* Slide-out panel */}
       <aside
-        className={`fixed right-0 top-0 h-full w-80 bg-surface border-l border-surface-border 
-                     z-50 transform transition-transform duration-300 ease-in-out shadow-2xl
-                     ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed right-0 top-0 h-full w-80 bg-paper border-l border-hairline
+                    z-50 transform transition-transform duration-250 ease-out shadow-elevated
+                    ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-surface-border">
-            <h2 className="font-mono text-xs text-gray-300 tracking-widest uppercase">
-              Analysis History
-            </h2>
+          <div className="flex items-center justify-between px-5 py-4 border-b border-hairline">
+            <div>
+              <p className="section-kicker">Session Log</p>
+              <h2 className="font-serif text-base font-semibold text-ink">
+                Analysis History
+              </h2>
+            </div>
             <div className="flex items-center gap-2">
               {entries.length > 0 && (
                 <button
+                  type="button"
                   onClick={onClear}
-                  className="text-gray-600 hover:text-accent-rose transition-colors"
+                  className="text-ink-muted hover:text-crimson transition-colors p-1"
                   title="Clear history"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               )}
               <button
+                type="button"
                 onClick={onToggle}
-                className="text-gray-500 hover:text-gray-300 transition-colors"
+                className="text-ink-muted hover:text-ink transition-colors p-1"
+                title="Close panel"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Entries */}
           <div className="flex-1 overflow-y-auto">
             {entries.length === 0 ? (
-              <div className="px-5 py-8 text-center">
-                <Clock className="w-8 h-8 text-gray-700 mx-auto mb-3" />
-                <p className="text-xs font-mono text-gray-600">No analyses yet</p>
-                <p className="text-[10px] text-gray-700 mt-1">
-                  Run a prediction to see it here
+              <div className="px-5 py-10 text-center">
+                <Clock className="w-7 h-7 text-slate-300 mx-auto mb-2.5" />
+                <p className="text-xs font-medium text-ink-secondary">No analyses recorded</p>
+                <p className="text-[11px] text-ink-muted mt-1">
+                  Completed batches are cached locally for quick recall.
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-surface-border">
+              <div className="divide-y divide-hairline">
                 {entries.map((entry) => (
                   <button
                     key={entry.id}
-                    onClick={() => onSelect(entry)}
-                    className="w-full text-left px-5 py-3 hover:bg-surface-overlay transition-colors group"
+                    type="button"
+                    onClick={() => {
+                      onSelect(entry);
+                      onToggle();
+                    }}
+                    className="w-full text-left px-5 py-3.5 hover:bg-canvas transition-colors"
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-[10px] text-gray-500">
-                        {new Date(entry.timestamp).toLocaleTimeString("de-AT", {
+                      <span className="data-mono text-[10px] text-ink-muted">
+                        {new Date(entry.timestamp).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
                       </span>
-                      <span className="font-mono text-[10px] text-gray-600">
-                        {entry.response.results.filter((r) => r.status === "success").length}
-                        /{entry.response.results.length}
+                      <span className="data-mono text-[10px] text-teal-academic font-medium">
+                        {entry.response.results.filter((r) => r.status === "success").length}/
+                        {entry.response.results.length} valid
                       </span>
                     </div>
-                    <p className="font-mono text-[11px] text-gray-400 truncate group-hover:text-gray-200 transition-colors">
-                      {entry.smiles.slice(0, 3).join(", ")}
-                      {entry.smiles.length > 3 ? ` +${entry.smiles.length - 3} more` : ""}
+                    <p className="data-mono text-[11px] text-ink truncate">
+                      {entry.smiles.slice(0, 2).join(", ")}
+                      {entry.smiles.length > 2 ? ` +${entry.smiles.length - 2} more` : ""}
                     </p>
-                    <p className="font-mono text-[10px] text-gray-600 mt-0.5">
-                      {entry.response.model_version} · {entry.response.prediction_time_ms.toFixed(0)}ms
+                    <p className="data-mono text-[10px] text-ink-muted mt-0.5">
+                      {entry.response.model_version} · {entry.response.prediction_time_ms.toFixed(0)} ms
                     </p>
                   </button>
                 ))}
@@ -103,19 +99,17 @@ export default function HistoryPanel({
             )}
           </div>
 
-          {/* Footer */}
-          <div className="px-5 py-3 border-t border-surface-border">
-            <p className="text-[10px] font-mono text-gray-600">
-              Stored in localStorage · Max {10} entries
+          <div className="px-5 py-3 border-t border-hairline bg-canvas">
+            <p className="data-mono text-[10px] text-ink-muted">
+              Browser localStorage · Retains last 10 runs
             </p>
           </div>
         </div>
       </aside>
 
-      {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-45"
+          className="fixed inset-0 bg-ink/20 backdrop-blur-[1px] z-40"
           onClick={onToggle}
         />
       )}

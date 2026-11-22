@@ -1,11 +1,11 @@
-Drug,Company,Year,Phase,Failure Reason,hepatotoxicity,FLAG_hepatotoxicity,hERG_inhibition,FLAG_hERG_inhibition,AMES_mutagenicity,FLAG_AMES_mutagenicity,CYP3A4_inhibition,FLAG_CYP3A4_inhibition,nephrotoxicity,FLAG_nephrotoxicity,CYP2D6_inhibition,FLAG_CYP2D6_inhibition,CYP2C9_inhibition,FLAG_CYP2C9_inhibition,blood_brain_barrier,FLAG_blood_brain_barrier,plasma_protein_binding,FLAG_plasma_protein_binding,caco2_permeability,FLAG_caco2_permeability,logD_logP,FLAG_logD_logP,P_gp_substrate_inhibitor,FLAG_P_gp_substrate_inhibitor
-BIA 10-2474,Bial,2016,Phase I,Neurotoxicity / off-target FAAH inhibition,0.3715,,0.4514,,0.6254,***,0.5147,***,0.4853,,0.4881,,0.3961,,0.4937,,0.3704,,0.2266,,0.3698,,0.5367,***
-Fialuridine (FIAU),Eli Lilly,1993,Phase II,Hepatotoxicity (mtDNA depletion),0.2459,,0.3973,,0.8259,***,0.3673,,0.673,***,0.5776,***,0.3228,,0.4501,,0.2097,,0.0957,,0.1848,,0.5189,***
-Torcetrapib,Pfizer,2006,Phase III,Cardiotoxicity / increased mortality,0.3733,,0.4585,,0.6662,***,0.5127,***,0.5144,***,0.4932,,0.359,,0.5149,***,0.3393,,0.2053,,0.3531,,0.5107,***
-Semagacestat,Eli Lilly,2011,Phase III,Hepatotoxicity + worsened cognition,0.3923,,0.4725,,0.5987,***,0.534,***,0.4784,,0.4745,,0.4167,,0.4957,,0.4023,,0.2355,,0.3559,,0.5404,***
-Troglitazone (Rezulin),Warner-Lambert / Pfizer,1997,Post-market,Hepatotoxicity (idiosyncratic DILI),0.3533,,0.4293,,0.6066,***,0.51,***,0.5425,***,0.4978,,0.4234,,0.4457,,0.3487,,0.2007,,0.3281,,0.5464,***
-Rofecoxib (Vioxx),Merck,2004,Post-market,Cardiotoxicity (COX-2 CV risk),0.3345,,0.4294,,0.6904,***,0.5025,***,0.5155,***,0.4811,,0.3097,,0.5059,***,0.3166,,0.131,,0.3009,,0.5614,***
-Cerivastatin (Baycol),Bayer,2001,Post-market,Rhabdomyolysis / myotoxicity,0.3084,,0.4119,,0.735,***,0.487,,0.5055,***,0.469,,0.2729,,0.494,,0.3114,,0.1018,,0.2684,,0.5761,***
-Terfenadine (Seldane),Hoechst Marion Roussel,1997,Post-market,hERG inhibition / Torsades de Pointes,0.3408,,0.4365,,0.6468,***,0.5173,***,0.4934,,0.4883,,0.3563,,0.5074,***,0.3655,,0.191,,0.351,,0.5467,***
-Mibefradil (Posicor),Roche,1998,Post-market,CYP3A4 / CYP2D6 drug-drug interactions,0.3452,,0.4331,,0.6393,***,0.5225,***,0.5233,***,0.4883,,0.348,,0.4968,,0.3414,,0.1654,,0.3133,,0.5603,***
-Verubecestat,Merck,2017,Phase III,No efficacy + worsened cognition (BACE1),0.3788,,0.4524,,0.6322,***,0.5268,***,0.5201,***,0.491,,0.3922,,0.4556,,0.3681,,0.1505,,0.298,,0.5724,***
+Drug,Year,Clinical_Profile,hERG_prob,hERG_std,hERG_tier,CYP3A4_prob,CYP3A4_std,CYP3A4_tier,Max_Tanimoto,AD_Status,QED,BOILED_Egg,Alerts
+Terfenadine (Seldane),1997,Withdrawn — hERG / Torsades de Pointes,0.8464,0.0966,HIGH,0.7224,0.1169,HIGH,1.0,In-Domain,0.397,white,0
+Astemizole (Hismanal),1999,Withdrawn — Potent hERG Blocker (IC50 ~1 nM),0.9666,0.0257,HIGH,0.7128,0.0932,HIGH,1.0,In-Domain,0.386,yolk,0
+Cisapride (Propulsid),2000,Withdrawn — hERG QT Prolongation,0.9151,0.0601,HIGH,0.7863,0.0403,HIGH,1.0,In-Domain,0.436,white,2
+Ketoconazole,2013,FDA Index Strong CYP3A4 Inhibitor (Ki ~15 nM),0.74,0.1182,HIGH,0.9327,0.0821,HIGH,1.0,In-Domain,0.455,yolk,1
+Mibefradil (Posicor),1998,Withdrawn — Mechanism-Based CYP3A4 DDI,0.8161,0.0655,HIGH,0.6081,0.032,MODERATE,0.92,In-Domain,0.418,yolk,0
+Haloperidol,2007,FDA QT Warning — Known hERG Liability,0.8711,0.0605,HIGH,0.4444,0.0924,LOW,1.0,In-Domain,0.759,yolk,0
+Troglitazone (Rezulin),2000,Withdrawn — Idiosyncratic Hepatotoxicity (DILI),0.669,0.1235,MODERATE,0.6798,0.0547,MODERATE,0.267,Borderline,0.541,white,0
+Rofecoxib (Vioxx),2004,Withdrawn — COX-2 Cardiovascular Risk,0.6584,0.074,MODERATE,0.4748,0.0819,MODERATE,0.315,Borderline,0.817,yolk,1
+Aspirin (Control),1899,Safe Clinical Control — No hERG/CYP3A4 Liability,0.2681,0.1068,LOW,0.253,0.0729,LOW,0.34,Borderline,0.55,yolk,1
+Caffeine (Control),1819,Safe Clinical Control — CYP1A2 Substrate,0.3059,0.168,LOW,0.2701,0.0871,LOW,0.219,Out-of-Domain,0.538,white,0

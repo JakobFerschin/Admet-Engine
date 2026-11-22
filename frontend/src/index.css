@@ -2,60 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Deep Dark Mode Base ─────────────────────────────────── */
 @layer base {
   * {
-    @apply border-surface-border;
+    @apply border-hairline;
   }
+
   body {
-    @apply bg-surface text-gray-200 font-sans antialiased;
+    @apply bg-canvas text-ink font-sans antialiased;
     margin: 0;
     min-height: 100vh;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
-  /* Scrollbar styling for the Bloomberg vibe */
+
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
   }
   ::-webkit-scrollbar-track {
-    background: #0a0a0f;
+    background: #F1F0EC;
   }
   ::-webkit-scrollbar-thumb {
-    background: #2a2a3a;
+    background: #CBD5E1;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #3a3a4a;
+    background: #94A3B8;
   }
 }
 
-/* ── Utility classes for data display ─────────────────────── */
 @layer components {
   .data-mono {
-    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    font-family: 'JetBrains Mono', Consolas, monospace;
     font-variant-numeric: tabular-nums;
   }
-  .glow-cyan {
-    text-shadow: 0 0 12px rgba(34, 211, 238, 0.3);
-  }
-  .glow-neon {
-    text-shadow: 0 0 16px rgba(0, 240, 255, 0.5);
-  }
+
   .card {
-    @apply bg-surface-raised border border-surface-border rounded-lg p-5;
+    @apply bg-paper border border-hairline rounded-md p-5 shadow-card;
   }
+
+  .section-kicker {
+    @apply font-mono text-[10px] uppercase tracking-[0.14em] text-ink-muted font-medium;
+  }
+
   .btn-primary {
-    @apply bg-accent-cyan/10 border border-accent-cyan/30 text-accent-cyan 
-           px-6 py-2.5 rounded-lg font-mono text-sm tracking-wider
-           hover:bg-accent-cyan/20 hover:border-accent-cyan/50
-           transition-all duration-200 
-           disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent;
+    @apply bg-crimson text-white px-5 py-2.5 rounded-md font-sans text-xs font-semibold tracking-wide
+           hover:bg-crimson-dark transition-colors duration-150 shadow-sm
+           disabled:opacity-40 disabled:cursor-not-allowed;
   }
+
+  .btn-secondary {
+    @apply bg-paper border border-hairline text-ink-secondary px-3.5 py-2 rounded-md
+           font-sans text-xs font-medium hover:bg-subtle hover:border-slate-300
+           transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
   .input-field {
-    @apply w-full bg-surface-overlay border border-surface-border rounded-lg
-           px-4 py-3 font-mono text-sm text-gray-100
-           placeholder:text-gray-600
-           focus:outline-none focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/20
-           transition-all duration-200;
+    @apply w-full bg-canvas border border-hairline rounded-md px-3.5 py-2.5
+           font-mono text-xs text-ink placeholder:text-slate-400
+           focus:bg-paper focus:outline-none focus:border-navy focus:ring-2 focus:ring-navy/10
+           transition-all duration-150;
+  }
+
+  .academic-table {
+    @apply w-full text-left border-collapse;
+  }
+
+  .academic-table th {
+    @apply font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted font-medium
+           py-2.5 px-3 border-b-2 border-ink/80;
+  }
+
+  .academic-table td {
+    @apply py-2.5 px-3 border-b border-hairline text-xs;
+  }
+
+  .svg-molecule svg {
+    width: 100%;
+    height: auto;
+    max-height: 230px;
+    display: block;
+    margin: 0 auto;
   }
 }

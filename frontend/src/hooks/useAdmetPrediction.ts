@@ -1,26 +1,57 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import axios, { AxiosError } from "axios";
-import type { AdmetResponse } from "../types/admet";
+import type { AdmetResponse, ModelMetadata } from "../types/admet";
 
-const API_URL = "http://localhost:8000/predict/admet";
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8000";
+
+interface HealthStatus {
+  status: string;
+  model_loaded: boolean;
+  model_version: string;
+  mode: string;
+  device: string;
+}
 
 interface UseAdmetPrediction {
-  /** Trigger a batch prediction. Returns the response or throws on network/API error. */
   predict: (smilesList: string[]) => Promise<AdmetResponse>;
-  /** Inject a cached response (for history restore). */
   restoreEntry: (response: AdmetResponse) => void;
-  /** The latest successful response, or null. */
   data: AdmetResponse | null;
-  /** True while a request is in flight. */
   loading: boolean;
-  /** Structured error { status, message } or null. */
   error: { status: number; message: string } | null;
+  health: HealthStatus | null;
+  metadata: ModelMetadata | null;
 }
 
 export function useAdmetPrediction(): UseAdmetPrediction {
   const [data, setData] = useState<AdmetResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<{ status: number; message: string } | null>(null);
+  const [health, setHealth] = useState<HealthStatus | null>(null);
+  const [metadata, setMetadata] = useState<ModelMetadata | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchServerInfo() {
+      try {
+        const [hRes, mRes] = await Promise.all([
+          axios.get<HealthStatus>(`${API_BASE}/health`, { timeout: 4000 }),
+          axios.get<ModelMetadata>(`${API_BASE}/model/metadata`, { timeout: 4000 }),
+        ]);
+        if (!cancelled) {
+          setHealth(hRes.data);
+          setMetadata(mRes.data);
+        }
+      } catch {
+        if (!cancelled) {
+          setHealth(null);
+        }
+      }
+    }
+    fetchServerInfo();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const restoreEntry = useCallback((response: AdmetResponse) => {
     setError(null);
@@ -34,8 +65,8 @@ export function useAdmetPrediction(): UseAdmetPrediction {
 
     try {
       const response = await axios.post<AdmetResponse>(
-        API_URL,
-        { smiles: smilesList },
+        `${API_BASE}/predict/admet`,
+        { smiles: smilesList, include_svg: true },
         { headers: { "Content-Type": "application/json" } },
       );
       setData(response.data);
@@ -43,16 +74,14 @@ export function useAdmetPrediction(): UseAdmetPrediction {
     } catch (err) {
       const axiosErr = err as AxiosError<{ detail?: unknown }>;
       let status = 0;
-      let message = "Unknown network error";
+      let message = "Unable to connect to inference backend.";
 
       if (axiosErr.response) {
         status = axiosErr.response.status;
         const detail = axiosErr.response.data?.detail;
-
         if (status === 422) {
-          // FastAPI validation error — extract meaningful info
           if (typeof detail === "string") {
-            message = `Error ${status}: ${detail}`;
+            message = `Validation error (422): ${detail}`;
           } else if (Array.isArray(detail)) {
             const msgs = detail
               .map((d: { msg?: string; loc?: string[] }) =>
@@ -60,17 +89,17 @@ export function useAdmetPrediction(): UseAdmetPrediction {
               )
               .filter(Boolean)
               .join("; ");
-            message = `Error ${status}: ${msgs || "Validation failed"}`;
+            message = `Validation error (422): ${msgs || "Invalid SMILES request"}`;
           } else {
-            message = `Error ${status}: Invalid request — check SMILES format`;
+            message = "Validation error (422): Check SMILES input format.";
           }
-        } else if (status === 500) {
-          message = `Error 500: Internal server error — check backend logs`;
-        } else if (status >= 400) {
-          message = `Error ${status}: ${axiosErr.response.statusText || "Request failed"}`;
+        } else if (status >= 500) {
+          message = `Server error (${status}): Check FastAPI backend logs.`;
+        } else {
+          message = `Request failed (${status}): ${axiosErr.response.statusText}`;
         }
       } else if (axiosErr.code === "ECONNREFUSED" || axiosErr.code === "ERR_NETWORK") {
-        message = "Error: Cannot reach backend — is localhost:8000 running?";
+        message = `Backend unreachable at ${API_BASE} — start FastAPI via: uvicorn src.api.main:app --port 8000`;
       }
 
       setError({ status, message });
@@ -80,5 +109,5 @@ export function useAdmetPrediction(): UseAdmetPrediction {
     }
   }, []);
 
-  return { predict, restoreEntry, data, loading, error };
+  return { predict, restoreEntry, data, loading, error, health, metadata };
 }

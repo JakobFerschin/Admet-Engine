@@ -1,27 +1,41 @@
-# Python & Environments
+# Python & Virtual Environments
 __pycache__/
 *.pyc
+*.pyo
 .env
 venv/
 .venv/
 env/
+.pytest_cache/
+.mypy_cache/
 
-# Data & Models (Achtung: Große Dateien nicht pushen!)
-# Wir erlauben kleine CSVs, aber blockieren fette SQLite/DBs
+# Raw Databases & Large Scratch Files
 *.db
 *.sqlite
 *.sqlite3
 data/raw/
 
-# Logs & Caches
+# Logs & Scratch Output
 *.log
 npm_log*.txt
-.pytest_cache/
+npm_out.txt
+results/
+
+# Local Agent Caches & Workspace Profile Files
 .autoclaw/
 .openclaw/
 .autoclaw-attachments/
-results/
+AGENTS.md
+SOUL.md
+USER.md
+MEMORY.md
+HEARTBEAT.md
+IDENTITY.md
+TOOLS.md
+memory/
+evolution-drafts/
+config/mcporter.json
 
-# Frontend
+# Frontend Build Artifacts
 frontend/node_modules/
 frontend/dist/

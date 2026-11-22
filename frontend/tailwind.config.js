@@ -7,36 +7,56 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        mono: ['"JetBrains Mono"', '"Fira Code"', '"Cascadia Code"', 'Consolas', 'monospace'],
+        serif: ['"Newsreader"', 'Georgia', 'Cambria', '"Times New Roman"', 'serif'],
         sans: ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['"JetBrains Mono"', '"Fira Code"', 'Consolas', 'monospace'],
       },
       colors: {
-        surface: {
-          DEFAULT: '#0a0a0f',   // bg-gray-950 level
-          raised:   '#111118',   // cards / panels
-          overlay:  '#1a1a24',   // inputs / interactive
-          border:   '#2a2a3a',   // subtle borders
+        canvas: '#F7F6F2',
+        paper: '#FFFFFF',
+        subtle: '#F1F0EC',
+        hairline: '#E2E4E9',
+        ink: {
+          DEFAULT: '#0F172A',
+          secondary: '#334155',
+          muted: '#64748B',
         },
-        accent: {
-          cyan:    '#22d3ee',    // data highlights
-          neon:    '#00f0ff',    // peak values
-          amber:   '#f59e0b',    // warnings (yellow)
-          rose:    '#f43f5e',    // danger (red)
-          emerald: '#10b981',    // safe (green)
-          violet:  '#a78bfa',    // secondary accent
+        crimson: {
+          DEFAULT: '#A51C30',
+          dark: '#821324',
+          soft: '#FDF2F4',
+          border: '#F2C6CE',
+        },
+        teal: {
+          academic: '#0F766E',
+          soft: '#F0FDFA',
+          border: '#B2DFDB',
+        },
+        ochre: {
+          DEFAULT: '#B45309',
+          soft: '#FFFBEB',
+          border: '#FDE68A',
+        },
+        navy: {
+          DEFAULT: '#1E3A5F',
+          soft: '#F0F5FA',
+          border: '#CBD9E8',
         },
       },
+      boxShadow: {
+        card: '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 1px rgba(15, 23, 42, 0.02)',
+        elevated: '0 4px 16px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)',
+      },
       animation: {
-        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'fade-in': 'fadeIn 0.3s ease-out',
+        'fade-in': 'fadeIn 0.25s ease-out',
       },
       keyframes: {
         fadeIn: {
-          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '0%': { opacity: '0', transform: 'translateY(3px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
     },
   },
   plugins: [],
-}
+};

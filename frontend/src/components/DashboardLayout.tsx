@@ -1,42 +1,124 @@
-import { type ReactNode } from 'react';
-import { FlaskConical } from 'lucide-react';
+import { type ReactNode } from "react";
+import { FlaskConical, BarChart3, Clock } from "lucide-react";
+
+export type WorkbenchTab = "workbench" | "validation";
 
 interface DashboardLayoutProps {
   children: ReactNode;
+  activeTab: WorkbenchTab;
+  onTabChange: (tab: WorkbenchTab) => void;
+  online: boolean;
+  modelVersion?: string;
+  historyCount: number;
+  onToggleHistory: () => void;
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function DashboardLayout({
+  children,
+  activeTab,
+  onTabChange,
+  online,
+  modelVersion,
+  historyCount,
+  onToggleHistory,
+}: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
-      {/* ── Header ──────────────────────────────────────────── */}
-      <header className="border-b border-surface-border bg-surface-raised/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <FlaskConical className="w-5 h-5 text-accent-cyan" />
-            <span className="font-mono text-sm tracking-[0.2em] text-gray-300">
-              ADMET-ENGINE
-            </span>
-            <span className="text-[10px] font-mono text-gray-600 tracking-widest">
-              // V1.0
-            </span>
+    <div className="min-h-screen bg-canvas flex flex-col">
+      {/* Subtle Harvard Crimson institutional top rule */}
+      <div className="h-[3px] w-full bg-crimson" />
+
+      {/* Academic Masthead */}
+      <header className="bg-paper border-b border-hairline sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-baseline gap-2.5">
+              <h1 className="font-serif text-xl font-semibold tracking-tight text-ink">
+                ADMET-Engine
+              </h1>
+              <span className="hidden sm:inline font-mono text-[10px] uppercase tracking-[0.14em] text-ink-muted">
+                Computational Medicinal Chemistry
+              </span>
+            </div>
+
+            <nav className="flex items-center gap-1 ml-2 pl-4 border-l border-hairline">
+              <button
+                type="button"
+                onClick={() => onTabChange("workbench")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  activeTab === "workbench"
+                    ? "bg-ink text-white"
+                    : "text-ink-secondary hover:bg-subtle hover:text-ink"
+                }`}
+              >
+                <FlaskConical className="w-3.5 h-3.5" />
+                Workbench
+              </button>
+              <button
+                type="button"
+                onClick={() => onTabChange("validation")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  activeTab === "validation"
+                    ? "bg-ink text-white"
+                    : "text-ink-secondary hover:bg-subtle hover:text-ink"
+                }`}
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                Validation &amp; Methods
+              </button>
+            </nav>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-accent-emerald animate-pulse" />
-            <span className="text-[11px] font-mono text-gray-500 tracking-wide">ONLINE</span>
+
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={onToggleHistory}
+              className="btn-secondary flex items-center gap-1.5 py-1.5"
+              title="Analysis History"
+            >
+              <Clock className="w-3.5 h-3.5 text-ink-muted" />
+              <span className="hidden sm:inline">History</span>
+              {historyCount > 0 && (
+                <span className="data-mono text-[10px] bg-subtle text-ink-secondary px-1.5 py-0.5 rounded">
+                  {historyCount}
+                </span>
+              )}
+            </button>
+
+            <div className="hidden md:flex items-center gap-2 pl-3 border-l border-hairline">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  online ? "bg-teal-academic" : "bg-crimson"
+                }`}
+              />
+              <div className="leading-tight">
+                <p className="data-mono text-[10px] font-medium text-ink">
+                  {online ? "API READY" : "OFFLINE"}
+                </p>
+                {modelVersion && (
+                  <p className="data-mono text-[9px] text-ink-muted">
+                    {modelVersion}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* ── Main Content ────────────────────────────────────── */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-8">
+      {/* Main Workspace */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-7">
         {children}
       </main>
 
-      {/* ── Footer ──────────────────────────────────────────── */}
-      <footer className="border-t border-surface-border px-6 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between text-[10px] font-mono text-gray-600">
-          <span>ADMET-Engine © 2026</span>
-          <span>DMPNN · PyTorch Geometric · FastAPI</span>
+      {/* Academic Footer */}
+      <footer className="border-t border-hairline bg-paper px-6 py-3.5 mt-8">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-[11px] text-ink-muted">
+          <span className="font-serif italic text-ink-secondary">
+            ADMET-Engine v2.0 — Preclinical Safety &amp; Pharmacokinetics Platform
+          </span>
+          <span className="data-mono text-[10px]">
+            ChEMBL v37 · Bemis-Murcko Scaffold Split · DMPNN + ECFP4 Ensemble · RDKit
+          </span>
         </div>
       </footer>
     </div>

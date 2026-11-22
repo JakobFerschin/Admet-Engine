@@ -18,9 +18,21 @@ Author: Senior Cheminformatics Data Engineer (Persona 1)
 Project: ADMET-Engine, Phase 1 — Data Infrastructure
 """
 
-from rdkit import Chem
+from rdkit import Chem, RDLogger
 from rdkit.Chem import SaltRemover, AllChem  # noqa: F401 — reserved for future 3D pipeline
 from rdkit.Chem.MolStandardize import rdMolStandardize
+
+# Silence noisy RDKit standardization info/warning logs during batch processing
+RDLogger.DisableLog("rdApp.info")
+
+# Module-level cached standardizers (avoids re-instantiating C++ objects per molecule)
+_SALT_REMOVER = SaltRemover.SaltRemover()
+_LARGEST_FRAGMENT = rdMolStandardize.LargestFragmentChooser(preferOrganic=True)
+_NORMALIZER = rdMolStandardize.Normalizer()
+_REIONIZER = rdMolStandardize.Reionizer()
+_TAUTOMER_ENUMERATOR = rdMolStandardize.TautomerEnumerator()
+_TAUTOMER_ENUMERATOR.SetMaxTautomers(64)
+_TAUTOMER_ENUMERATOR.SetMaxTransforms(64)
 
 
 def standardize_molecule(smiles: str) -> Chem.Mol:
@@ -36,7 +48,7 @@ def standardize_molecule(smiles: str) -> Chem.Mol:
 
     Returns:
         An RDKit Mol object in its canonical standardized form,
-        or None if the input SMILES is invalid.
+        or an empty Mol for an empty input string.
 
     Raises:
         ValueError: If the input SMILES cannot be parsed by RDKit.
@@ -45,32 +57,31 @@ def standardize_molecule(smiles: str) -> Chem.Mol:
     if mol is None:
         raise ValueError(f"Invalid SMILES string: '{smiles}' — could not parse with RDKit.")
 
-    # 1. Remove salts/counterions (e.g., [Na+], [Cl-], etc.)
-    remover = SaltRemover.SaltRemover()
-    mol = remover.StripMol(mol)
+    if mol.GetNumAtoms() == 0:
+        return mol
+
+    # 1. Remove salts/counterions (e.g., [Na+], [Cl-], Br., etc.)
+    mol = _SALT_REMOVER.StripMol(mol, dontRemoveEverything=True)
+    if mol.GetNumAtoms() > 0:
+        mol = _LARGEST_FRAGMENT.choose(mol)
 
     # 2. Remove explicit hydrogens
     mol = Chem.RemoveHs(mol)
 
     # 3. Normalize functional groups (e.g., nitro, sulfoxide to canonical forms)
-    normalizer = rdMolStandardize.Normalizer()
-    mol = normalizer.normalize(mol)
+    mol = _NORMALIZER.normalize(mol)
 
     # 4. Reionize to preferred charge state
-    reionizer = rdMolStandardize.Reionizer()
-    mol = reionizer.reionize(mol)
+    mol = _REIONIZER.reionize(mol)
 
     # 5. Standardize tautomer
-    enumerator = rdMolStandardize.TautomerEnumerator()
-    mol = enumerator.Canonicalize(mol)
+    mol = _TAUTOMER_ENUMERATOR.Canonicalize(mol)
 
     # 6. Assign stereochemistry
     Chem.AssignStereochemistry(mol, force=True, cleanIt=True)
 
-    # 7. Kekulize
+    # 7. Kekulize and re-sanitize to guarantee canonical aromaticity perception
     Chem.Kekulize(mol, clearAromaticFlags=True)
-
-    # 8. Final sanitization
     Chem.SanitizeMol(mol)
 
     return mol

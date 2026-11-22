@@ -109,28 +109,47 @@ class DMPNNEncoder(nn.Module):
         edge j = (v, u).  Assumes the graph contains both directions for
         every undirected bond.
 
+        Uses an O(E) fast-path when directed edges are stored as adjacent
+        (u→v, v→u) pairs (standard RDKit featurizer layout), and falls back
+        to an O(E log E) sorted lookup with O(E) memory — avoiding the
+        O(N^2) memory blowup on large batched graphs.
+
         Returns a LongTensor of shape [num_edges] where rev[i] = j.
         """
         num_edges = edge_index.size(1)
-        # Encode each edge as a single integer: u * N + v
-        # N must be larger than the maximum node index
-        num_nodes = int(edge_index.max()) + 1
+        device = edge_index.device
+        if num_edges == 0:
+            return torch.empty(0, dtype=torch.long, device=device)
+
         src, dst = edge_index[0], edge_index[1]
-        forward_key = src * num_nodes + dst
-        reverse_key = dst * num_nodes + src
 
-        # Build a mapping from forward_key → edge index
-        key_to_idx = torch.empty(num_nodes * num_nodes, dtype=torch.long,
-                                 device=edge_index.device).fill_(-1)
-        key_to_idx[forward_key] = torch.arange(num_edges, device=edge_index.device)
+        # O(E) fast-path: edges stored as consecutive (u, v), (v, u) pairs
+        if num_edges % 2 == 0:
+            even_src, odd_src = src[0::2], src[1::2]
+            even_dst, odd_dst = dst[0::2], dst[1::2]
+            if torch.equal(even_src, odd_dst) and torch.equal(even_dst, odd_src):
+                return torch.arange(num_edges, dtype=torch.long, device=device) ^ 1
 
-        reverse_idx = key_to_idx[reverse_key]
-        if (reverse_idx < 0).any():
+        # General O(E log E) time, O(E) memory fallback for arbitrary edge order
+        num_nodes = int(edge_index.max().item()) + 1
+        src64 = src.to(torch.int64)
+        dst64 = dst.to(torch.int64)
+        forward_key = src64 * num_nodes + dst64
+        reverse_key = dst64 * num_nodes + src64
+
+        order = torch.argsort(forward_key)
+        sorted_fwd = forward_key[order]
+        pos = torch.searchsorted(sorted_fwd, reverse_key)
+
+        in_bounds = pos < num_edges
+        clamped_pos = pos.clamp(max=num_edges - 1)
+        matched = in_bounds & (sorted_fwd[clamped_pos] == reverse_key)
+        if not bool(matched.all()):
             raise RuntimeError(
                 "DMPNNEncoder requires both directions for every bond. "
                 "Some directed edges have no reverse counterpart."
             )
-        return reverse_idx
+        return order[clamped_pos]
 
     def forward(
         self,
@@ -151,6 +170,15 @@ class DMPNNEncoder(nn.Module):
         """
         num_nodes = x.size(0)
         num_edges = edge_index.size(1)
+
+        # Edge-free molecules (e.g. single-atom ions or noble gases)
+        if num_edges == 0:
+            atom_msg = torch.zeros(
+                (num_nodes, self.hidden_dim), dtype=x.dtype, device=x.device
+            )
+            atom_embedding = F.relu(self.W_a(torch.cat([x, atom_msg], dim=-1)))
+            return self.dropout(atom_embedding)
+
         src, dst = edge_index[0], edge_index[1]
 
         # ── 1. Initial edge hidden states ──────────────────────────

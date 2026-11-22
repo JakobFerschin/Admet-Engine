@@ -1,261 +1,305 @@
 import { useState, useCallback } from "react";
-import { GitCompare, X } from "lucide-react";
+import { GitCompare, X, AlertCircle } from "lucide-react";
 import { useAdmetPrediction } from "./hooks/useAdmetPrediction";
 import { useAnalysisHistory } from "./hooks/useAnalysisHistory";
 import type { HistoryEntry } from "./hooks/useAnalysisHistory";
-import DashboardLayout from "./components/DashboardLayout";
+import DashboardLayout, { type WorkbenchTab } from "./components/DashboardLayout";
 import SmilesInput from "./components/SmilesInput";
-import RadarChart from "./components/RadarChart";
-import TriageBoard from "./components/TriageBoard";
+import MoleculeStructureCard from "./components/MoleculeStructureCard";
+import EndpointPredictionPanel from "./components/EndpointPredictionPanel";
+import BoiledEggChart from "./components/BoiledEggChart";
+import PhyschemMpoPanel from "./components/PhyschemMpoPanel";
+import ModelValidationView from "./components/ModelValidationView";
 import PdfExportButton from "./components/PdfExportButton";
 import HistoryPanel from "./components/HistoryPanel";
-import type { AdmetResponse } from "./types/admet";
-
-const CHART_COLOURS = ["#22d3ee", "#a78bfa", "#f59e0b", "#f43f5e", "#10b981"];
 
 export default function App() {
-  const { predict, loading, error, data, restoreEntry } = useAdmetPrediction();
-  const { entries, addEntry, clearHistory, loadEntry } = useAnalysisHistory();
+  const { predict, loading, error, data, restoreEntry, health, metadata } =
+    useAdmetPrediction();
+  const { entries, addEntry, clearHistory } = useAnalysisHistory();
 
+  const [activeTab, setActiveTab] = useState<WorkbenchTab>("workbench");
   const [inputSmiles, setInputSmiles] = useState<string[]>([]);
+  const [compoundNames, setCompoundNames] = useState<string[]>([]);
   const [selectedMolecule, setSelectedMolecule] = useState(0);
-  // Compare mode: up to 2 indices
-  const [compareSlots, setCompareSlots] = useState<number[]>([]);
-  // History panel toggle
+  const [compareIndex, setCompareIndex] = useState<number | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  const handleSubmit = async (smilesList: string[]) => {
+  const handleSubmit = async (smilesList: string[], names?: string[]) => {
+    setActiveTab("workbench");
     setInputSmiles(smilesList);
+    setCompoundNames(names ?? smilesList.map((_, i) => `Compound ${i + 1}`));
     setSelectedMolecule(0);
-    setCompareSlots([]);
+    setCompareIndex(null);
     try {
       const result = await predict(smilesList);
       addEntry(smilesList, result);
     } catch {
-      // error state captured by hook
+      // Captured in hook error state
     }
   };
 
   const handleHistorySelect = useCallback(
     (entry: HistoryEntry) => {
+      setActiveTab("workbench");
       setInputSmiles(entry.smiles);
+      setCompoundNames(entry.smiles.map((_, i) => `Compound ${i + 1}`));
       setSelectedMolecule(0);
-      setCompareSlots([]);
+      setCompareIndex(null);
       restoreEntry(entry.response);
     },
     [restoreEntry],
   );
 
-  const toggleCompare = (molIndex: number) => {
-    setCompareSlots((prev) => {
-      if (prev.includes(molIndex)) {
-        return prev.filter((i) => i !== molIndex);
-      }
-      if (prev.length >= 2) {
-        // Replace the oldest slot
-        return [prev[1], molIndex];
-      }
-      return [...prev, molIndex];
-    });
+  const handleInspectFromValidation = (smiles: string, name: string) => {
+    handleSubmit([smiles], [name]);
   };
 
-  const successResults = data?.results.filter((r) => r.status === "success") ?? [];
-  const errorResults = data?.results.filter((r) => r.status === "error") ?? [];
-  const currentMolecule = successResults[Math.min(selectedMolecule, successResults.length - 1)];
+  const indexedResults =
+    data?.results.map((r, idx) => ({
+      result: r,
+      label: compoundNames[idx] || `Compound ${idx + 1}`,
+    })) ?? [];
 
-  // Build compare data for RadarChart overlay
-  const compareMoleculeA = compareSlots.length >= 1 ? successResults[compareSlots[0]] : null;
-  const compareMoleculeB = compareSlots.length >= 2 ? successResults[compareSlots[1]] : null;
+  const successItems = indexedResults.filter((x) => x.result.status === "success");
+  const errorItems = indexedResults.filter((x) => x.result.status === "error");
+
+  const safeIdx = Math.min(selectedMolecule, Math.max(0, successItems.length - 1));
+  const currentItem = successItems[safeIdx];
+  const overlayItem =
+    compareIndex != null && compareIndex !== safeIdx ? successItems[compareIndex] : null;
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6 animate-fade-in">
-        {/* ── Input Section ───────────────────────────────── */}
-        <SmilesInput onSubmit={handleSubmit} loading={loading} />
+    <DashboardLayout
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      online={Boolean(health?.model_loaded)}
+      modelVersion={health?.model_version ?? data?.model_version}
+      historyCount={entries.length}
+      onToggleHistory={() => setHistoryOpen((p) => !p)}
+    >
+      {activeTab === "validation" ? (
+        <ModelValidationView
+          metadata={metadata}
+          onAnalyzeDrug={handleInspectFromValidation}
+        />
+      ) : (
+        <div className="space-y-6 animate-fade-in">
+          {/* Input Panel */}
+          <SmilesInput onSubmit={handleSubmit} loading={loading} />
 
-        {/* ── Error Banner ─────────────────────────────────── */}
-        {error && (
-          <div className="card border-accent-rose/30 bg-accent-rose/5">
-            <div className="flex items-start gap-3">
-              <span className="font-mono text-accent-rose text-sm mt-0.5">⚠</span>
-              <div>
-                <p className="font-mono text-sm text-accent-rose">{error.message}</p>
-                {error.status === 0 && (
-                  <p className="text-xs text-gray-500 mt-1 font-mono">
-                    Ensure the FastAPI backend is running:{" "}
-                    <code className="text-gray-400">uvicorn src.api.main:app --port 8000</code>
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── Loading State ────────────────────────────────── */}
-        {loading && (
-          <div className="card border-dashed border-surface-border/50 py-12 text-center">
-            <div className="inline-block w-6 h-6 border-2 border-accent-cyan/30 border-t-accent-cyan rounded-full animate-spin mb-3" />
-            <p className="font-mono text-sm text-gray-400">
-              Running inference on {inputSmiles.length} molecule{inputSmiles.length !== 1 ? "s" : ""}…
-            </p>
-          </div>
-        )}
-
-        {/* ── Results ──────────────────────────────────────── */}
-        {data && !loading && successResults.length > 0 && (
-          <div className="space-y-4">
-            {/* ── Meta bar ──────────────────────────────────── */}
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="text-[10px] font-mono text-gray-600">
-                <span>
-                  Model: <span className="text-gray-400">{data.model_version}</span>
-                </span>
-                <span className="ml-4">
-                  {data.prediction_time_ms.toFixed(1)} ms · {successResults.length}/{data.results.length} succeeded
-                </span>
-              </div>
-              <PdfExportButton response={data} />
-            </div>
-
-            {/* ── Molecule tabs + Compare ──────────────────── */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {successResults.map((r, i) => {
-                const isSelected = i === selectedMolecule;
-                const isCompared = compareSlots.includes(i);
-                const slotLabel = compareSlots[0] === i ? "A" : compareSlots[1] === i ? "B" : null;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedMolecule(i)}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      toggleCompare(i);
-                    }}
-                    className={`relative px-3 py-1.5 rounded-md font-mono text-[11px] transition-all duration-150
-                      ${isSelected
-                        ? "bg-accent-cyan/15 border border-accent-cyan/40 text-accent-cyan"
-                        : isCompared
-                          ? "bg-accent-violet/10 border border-accent-violet/30 text-accent-violet"
-                          : "bg-surface-overlay border border-surface-border text-gray-500 hover:border-gray-600 hover:text-gray-300"
-                      }`}
-                    title={`${r.smiles}\nRight-click to toggle compare (${isCompared ? "remove" : "add"})`}
-                  >
-                    {slotLabel && (
-                      <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full 
-                                       bg-accent-violet text-[9px] font-bold text-white flex items-center justify-center">
-                        {slotLabel}
-                      </span>
-                    )}
-                    Mol {i + 1}
-                  </button>
-                );
-              })}
-
-              {/* Compare mode controls */}
-              {compareSlots.length > 0 && (
-                <div className="flex items-center gap-1.5 ml-2">
-                  <span className="text-[10px] font-mono text-accent-violet flex items-center gap-1">
-                    <GitCompare className="w-3 h-3" />
-                    Compare ({compareSlots.length}/2)
-                  </span>
-                  <button
-                    onClick={() => setCompareSlots([])}
-                    className="text-gray-600 hover:text-gray-400 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* ── SMILES display ────────────────────────────── */}
-            <div className="bg-surface-overlay border border-surface-border rounded-lg px-4 py-2.5 font-mono text-xs text-gray-400 break-all">
-              {currentMolecule?.smiles}
-            </div>
-
-            {/* ── Compare mode hint ─────────────────────────── */}
-            {compareSlots.length >= 1 && (
-              <div className="text-[10px] font-mono text-gray-600 flex items-center gap-2">
-                <GitCompare className="w-3 h-3 text-accent-violet" />
-                <span>
-                  Compare active —{" "}
-                  <span className="text-accent-cyan">Cyan</span> = Mol {compareSlots[0] + 1}
-                  {compareSlots[1] != null && (
-                    <>
-                      {" "}| <span className="text-fuchsia-400">Magenta</span> = Mol {compareSlots[1] + 1}
-                    </>
-                  )}
-                </span>
-                <span className="text-gray-700 ml-2">(Right-click tabs to toggle)</span>
-              </div>
-            )}
-
-            {/* ── Charts + Triage grid ──────────────────────── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Compare mode: overlay two polygons */}
-              {compareSlots.length >= 2 && compareMoleculeA && compareMoleculeB ? (
-                <RadarChart
-                  predictions={compareMoleculeA.predictions ?? {}}
-                  moleculeLabel={`Mol ${compareSlots[0] + 1}`}
-                  colour="#22d3ee"
-                  overlayPredictions={compareMoleculeB.predictions ?? {}}
-                  overlayLabel={`Mol ${compareSlots[1] + 1}`}
-                  overlayColour="#d946ef"
-                />
-              ) : compareSlots.length === 1 && compareMoleculeA ? (
-                <RadarChart
-                  predictions={compareMoleculeA.predictions ?? {}}
-                  moleculeLabel={`Mol ${compareSlots[0] + 1} (A)`}
-                  colour="#22d3ee"
-                />
-              ) : (
-                <RadarChart
-                  predictions={currentMolecule?.predictions ?? {}}
-                  moleculeLabel={`Mol ${selectedMolecule + 1}`}
-                  colour={CHART_COLOURS[selectedMolecule % CHART_COLOURS.length]}
-                />
-              )}
-              <TriageBoard
-                predictions={currentMolecule?.predictions ?? {}}
-                moleculeLabel={`Mol ${selectedMolecule + 1}`}
-              />
-            </div>
-
-            {/* ── Error molecules summary ───────────────────── */}
-            {errorResults.length > 0 && (
-              <details className="card border-accent-amber/20 bg-accent-amber/5">
-                <summary className="font-mono text-xs text-accent-amber cursor-pointer">
-                  {errorResults.length} molecule{errorResults.length !== 1 ? "s" : ""} failed — click for details
-                </summary>
-                <div className="mt-2 space-y-1">
-                  {errorResults.map((r, i) => (
-                    <p key={i} className="text-[11px] font-mono text-gray-500">
-                      <span className="text-gray-400">{r.smiles.slice(0, 50)}…</span>
-                      <span className="text-accent-rose ml-2">{r.error}</span>
+          {/* Error Banner */}
+          {error && (
+            <div className="card border-crimson-border bg-crimson-soft">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 text-crimson mt-0.5 shrink-0" />
+                <div className="text-xs space-y-1">
+                  <p className="font-semibold text-crimson">{error.message}</p>
+                  {error.status === 0 && (
+                    <p className="text-ink-secondary">
+                      Launch the FastAPI server from the repository root:{" "}
+                      <code className="data-mono bg-white px-1.5 py-0.5 rounded border border-crimson-border">
+                        uvicorn src.api.main:app --port 8000
+                      </code>
                     </p>
-                  ))}
+                  )}
                 </div>
-              </details>
-            )}
-          </div>
-        )}
+              </div>
+            </div>
+          )}
 
-        {/* ── All-failed state ──────────────────────────────── */}
-        {data && !loading && successResults.length === 0 && (
-          <div className="card border-accent-rose/30 bg-accent-rose/5">
-            <p className="font-mono text-sm text-accent-rose">
-              All {data.results.length} molecule{data.results.length !== 1 ? "s" : ""} failed processing.
-            </p>
-            {errorResults.map((r, i) => (
-              <p key={i} className="text-xs font-mono text-gray-500 mt-1">
-                {r.smiles.slice(0, 40)}… → {r.error}
+          {/* Loading State */}
+          {loading && (
+            <div className="card py-12 text-center space-y-3">
+              <div className="inline-block w-6 h-6 border-2 border-hairline border-t-crimson rounded-full animate-spin" />
+              <p className="font-serif text-base text-ink">
+                Running multi-modal inference &amp; cheminformatics profiling…
               </p>
-            ))}
-          </div>
-        )}
-      </div>
+              <p className="data-mono text-[11px] text-ink-muted">
+                {inputSmiles.length} compound{inputSmiles.length !== 1 ? "s" : ""} · DMPNN + ECFP4/PhysChem Ensemble + RDKit
+              </p>
+            </div>
+          )}
 
-      {/* ── History Panel ───────────────────────────────────── */}
+          {/* Initial Academic Overview when no batch has been submitted yet */}
+          {!data && !loading && (
+            <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="card space-y-1.5">
+                <p className="section-kicker">01 · Graph &amp; QSAR Consensus</p>
+                <h3 className="font-serif text-base font-semibold text-ink">
+                  Scaffold-Validated ChEMBL v37 Ensemble
+                </h3>
+                <p className="text-xs text-ink-secondary leading-relaxed">
+                  Combines a 45-dim one-hot Chemprop DMPNN, Residual ECFP4+PhysChem MLP,
+                  ExtraTrees, and L2 Logistic QSAR — temperature-calibrated on unseen
+                  Bemis-Murcko scaffolds with 95% epistemic uncertainty intervals.
+                </p>
+              </div>
+              <div className="card space-y-1.5">
+                <p className="section-kicker">02 · Applicability Domain</p>
+                <h3 className="font-serif text-base font-semibold text-ink">
+                  Tanimoto Analog Verification
+                </h3>
+                <p className="text-xs text-ink-secondary leading-relaxed">
+                  Every prediction reports exact maximum ECFP4 Tanimoto similarity against the
+                  ChEMBL v37 training corpus and surfaces the closest experimental training
+                  analog so out-of-domain extrapolations are immediately flagged.
+                </p>
+              </div>
+              <div className="card space-y-1.5">
+                <p className="section-kicker">03 · Medicinal Chemistry Suite</p>
+                <h3 className="font-serif text-base font-semibold text-ink">
+                  BOILED-Egg, QED &amp; Toxicophore Alerts
+                </h3>
+                <p className="text-xs text-ink-secondary leading-relaxed">
+                  Deterministic RDKit profiling computes 2D structures with PAINS/Brenk atom
+                  highlighting, exact Daina &amp; Zoete BOILED-Egg permeation ellipses, Lipinski
+                  Ro5, Veber, Pfizer 3/75, GSK 4/400, QED, and Fsp³.
+                </p>
+              </div>
+            </section>
+          )}
+
+          {/* Results Workspace */}
+          {data && !loading && successItems.length > 0 && currentItem && (
+            <div className="space-y-5">
+              {/* Batch Summary Bar + Compound Selector */}
+              <div className="card py-3.5 px-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {successItems.map((item, idx) => {
+                    const isSelected = idx === safeIdx;
+                    const isCompared = idx === compareIndex;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setSelectedMolecule(idx)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          setCompareIndex((prev) => (prev === idx ? null : idx));
+                        }}
+                        title={`${item.result.smiles}\nRight-click to overlay on MPO radar`}
+                        className={`px-3 py-1.5 rounded text-xs font-medium transition-colors border ${
+                          isSelected
+                            ? "bg-ink text-white border-ink"
+                            : isCompared
+                              ? "bg-navy-soft text-navy border-navy-border"
+                              : "bg-canvas text-ink-secondary border-hairline hover:bg-subtle"
+                        }`}
+                      >
+                        {item.label}
+                        {isCompared && (
+                          <span className="ml-1.5 data-mono text-[9px] uppercase opacity-80">
+                            [Compare]
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+
+                  {overlayItem && (
+                    <button
+                      type="button"
+                      onClick={() => setCompareIndex(null)}
+                      className="inline-flex items-center gap-1 text-[11px] text-navy bg-navy-soft px-2 py-1 rounded border border-navy-border"
+                    >
+                      <GitCompare className="w-3 h-3" />
+                      Overlay: {overlayItem.label}
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="data-mono text-[11px] text-ink-muted">
+                    {data.model_version} · {data.prediction_time_ms.toFixed(1)} ms ·{" "}
+                    {successItems.length}/{data.results.length} valid
+                  </span>
+                  <PdfExportButton response={data} compoundNames={compoundNames} />
+                </div>
+              </div>
+
+              {/* Row 1: 2D Structure & Alerts + Calibrated ChEMBL ML Predictions & AD */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <div className="lg:col-span-5">
+                  {currentItem.result.cheminformatics && (
+                    <MoleculeStructureCard
+                      compoundName={currentItem.label}
+                      inputSmiles={currentItem.result.smiles}
+                      chem={currentItem.result.cheminformatics}
+                    />
+                  )}
+                </div>
+                <div className="lg:col-span-7">
+                  {currentItem.result.ml_endpoints ? (
+                    <EndpointPredictionPanel
+                      mlEndpoints={currentItem.result.ml_endpoints}
+                      applicabilityDomain={currentItem.result.applicability_domain}
+                      metadata={metadata}
+                    />
+                  ) : (
+                    <div className="card">
+                      <p className="text-xs text-ink-muted">
+                        Legacy model active — restart backend with ChEMBL v37 ensemble bundle.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Row 2: Analytical BOILED-Egg Permeation Map */}
+              <BoiledEggChart
+                molecules={successItems.map((x) => x.result)}
+                labels={successItems.map((x) => x.label)}
+                selectedIndex={safeIdx}
+                onSelect={setSelectedMolecule}
+              />
+
+              {/* Row 3: Physicochemical Readout + Rule Compliance + MPO Comparison Radar */}
+              {currentItem.result.cheminformatics && (
+                <PhyschemMpoPanel
+                  chem={currentItem.result.cheminformatics}
+                  compoundName={currentItem.label}
+                  overlayChem={overlayItem?.result.cheminformatics}
+                  overlayName={overlayItem?.label}
+                />
+              )}
+
+              {/* Partial Errors */}
+              {errorItems.length > 0 && (
+                <details className="card border-ochre-border bg-ochre-soft">
+                  <summary className="text-xs font-semibold text-ochre cursor-pointer">
+                    {errorItems.length} invalid SMILES entry excluded from batch — click to inspect
+                  </summary>
+                  <div className="mt-2.5 space-y-1">
+                    {errorItems.map((item, i) => (
+                      <p key={i} className="data-mono text-[11px] text-ink-secondary">
+                        <span className="font-semibold">{item.result.smiles}</span> —{" "}
+                        <span className="text-crimson">{item.result.error}</span>
+                      </p>
+                    ))}
+                  </div>
+                </details>
+              )}
+            </div>
+          )}
+
+          {/* All Failed State */}
+          {data && !loading && successItems.length === 0 && (
+            <div className="card border-crimson-border bg-crimson-soft space-y-1.5">
+              <p className="text-sm font-semibold text-crimson">
+                All {data.results.length} submitted SMILES failed RDKit standardization.
+              </p>
+              {errorItems.map((item, i) => (
+                <p key={i} className="data-mono text-xs text-ink-secondary">
+                  {item.result.smiles} → {item.result.error}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <HistoryPanel
         entries={entries}
         onSelect={handleHistorySelect}

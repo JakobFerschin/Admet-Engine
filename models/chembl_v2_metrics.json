@@ -1,0 +1,346 @@
+{
+  "model_version": "chembl_v37_ensemble_v2",
+  "trained_at_utc": "2026-11-22T11:04:25Z",
+  "dataset": "ChEMBL v37 (Bioactivity confidence >= 4, pChEMBL >= 5.0 active threshold)",
+  "split_method": "Bemis-Murcko Scaffold Split (80/10/10, zero core scaffold overlap)",
+  "architecture": {
+    "members": [
+      "Chemprop-grade One-Hot DMPNN (45-dim atom / 10-dim bond, T=3, Set2Set)",
+      "Residual Morgan ECFP4 (2048-bit) + 20 RDKit PhysChem Deep Network",
+      "ExtraTrees Non-Linear QSAR Classifier (220 trees)",
+      "L2-Regularized Logistic QSAR Classifier (C=0.2)"
+    ],
+    "calibration": "Post-hoc validation-set temperature scaling (NLL minimization)",
+    "uncertainty": "Epistemic std across 4 heterogeneous model families (95% CI)",
+    "applicability_domain": "Exact vectorized ECFP4 Tanimoto similarity vs. ChEMBL v37 training corpus"
+  },
+  "scaffold_stats": {
+    "total_compounds": 16270,
+    "total_scaffolds": 8252,
+    "train_compounds": 13016,
+    "train_scaffolds": 4998,
+    "val_compounds": 1627,
+    "val_scaffolds": 1627,
+    "test_compounds": 1627,
+    "test_scaffolds": 1627
+  },
+  "endpoints": {
+    "hERG_inhibition": {
+      "short_name": "hERG",
+      "target_id": "CHEMBL240 (KCNH2 / hERG)",
+      "weights": {
+        "dmpnn": 0.0696,
+        "ecfp4_mlp": 0.3429,
+        "extra_trees": 0.4145,
+        "linear_qsar": 0.173
+      },
+      "temperatures": {
+        "dmpnn": 1.1375,
+        "ecfp4_mlp": 2.1487,
+        "extra_trees": 1.0926,
+        "linear_qsar": 1.7726
+      },
+      "test_metrics": {
+        "n_samples": 1177,
+        "n_positive": 830,
+        "prevalence": 0.7052,
+        "roc_auc": 0.7836,
+        "pr_auc": 0.8955,
+        "brier_score": 0.1656,
+        "ece": 0.0328,
+        "f1": 0.8385,
+        "balanced_accuracy": 0.6396,
+        "sensitivity": 0.9133,
+        "specificity": 0.366
+      }
+    },
+    "CYP3A4_inhibition": {
+      "short_name": "CYP3A4",
+      "target_id": "CHEMBL340 (CYP3A4)",
+      "weights": {
+        "dmpnn": 0.05,
+        "ecfp4_mlp": 0.4424,
+        "extra_trees": 0.3254,
+        "linear_qsar": 0.1821
+      },
+      "temperatures": {
+        "dmpnn": 1.3493,
+        "ecfp4_mlp": 2.249,
+        "extra_trees": 1.0272,
+        "linear_qsar": 1.8671
+      },
+      "test_metrics": {
+        "n_samples": 516,
+        "n_positive": 330,
+        "prevalence": 0.6395,
+        "roc_auc": 0.7664,
+        "pr_auc": 0.8506,
+        "brier_score": 0.1875,
+        "ece": 0.0541,
+        "f1": 0.7911,
+        "balanced_accuracy": 0.6457,
+        "sensitivity": 0.8667,
+        "specificity": 0.4247
+      }
+    }
+  },
+  "ablation_table": {
+    "hERG_inhibition": {
+      "dmpnn": {
+        "n_samples": 1177,
+        "n_positive": 830,
+        "prevalence": 0.7052,
+        "roc_auc": 0.733,
+        "pr_auc": 0.8595,
+        "brier_score": 0.1787,
+        "ece": 0.0219,
+        "f1": 0.826,
+        "balanced_accuracy": 0.6321,
+        "sensitivity": 0.8867,
+        "specificity": 0.3775
+      },
+      "ecfp4_mlp": {
+        "n_samples": 1177,
+        "n_positive": 830,
+        "prevalence": 0.7052,
+        "roc_auc": 0.7685,
+        "pr_auc": 0.8794,
+        "brier_score": 0.1689,
+        "ece": 0.0365,
+        "f1": 0.8405,
+        "balanced_accuracy": 0.6776,
+        "sensitivity": 0.8855,
+        "specificity": 0.4697
+      },
+      "extra_trees": {
+        "n_samples": 1177,
+        "n_positive": 830,
+        "prevalence": 0.7052,
+        "roc_auc": 0.7739,
+        "pr_auc": 0.8909,
+        "brier_score": 0.1705,
+        "ece": 0.0455,
+        "f1": 0.8304,
+        "balanced_accuracy": 0.5956,
+        "sensitivity": 0.9289,
+        "specificity": 0.2622
+      },
+      "linear_qsar": {
+        "n_samples": 1177,
+        "n_positive": 830,
+        "prevalence": 0.7052,
+        "roc_auc": 0.7447,
+        "pr_auc": 0.8686,
+        "brier_score": 0.178,
+        "ece": 0.041,
+        "f1": 0.8251,
+        "balanced_accuracy": 0.6567,
+        "sensitivity": 0.8639,
+        "specificity": 0.4496
+      },
+      "consensus_ensemble": {
+        "n_samples": 1177,
+        "n_positive": 830,
+        "prevalence": 0.7052,
+        "roc_auc": 0.7836,
+        "pr_auc": 0.8955,
+        "brier_score": 0.1656,
+        "ece": 0.0328,
+        "f1": 0.8385,
+        "balanced_accuracy": 0.6396,
+        "sensitivity": 0.9133,
+        "specificity": 0.366
+      }
+    },
+    "CYP3A4_inhibition": {
+      "dmpnn": {
+        "n_samples": 516,
+        "n_positive": 330,
+        "prevalence": 0.6395,
+        "roc_auc": 0.6464,
+        "pr_auc": 0.7685,
+        "brier_score": 0.2183,
+        "ece": 0.0638,
+        "f1": 0.7365,
+        "balanced_accuracy": 0.5821,
+        "sensitivity": 0.7879,
+        "specificity": 0.3763
+      },
+      "ecfp4_mlp": {
+        "n_samples": 516,
+        "n_positive": 330,
+        "prevalence": 0.6395,
+        "roc_auc": 0.7475,
+        "pr_auc": 0.8315,
+        "brier_score": 0.1924,
+        "ece": 0.043,
+        "f1": 0.7719,
+        "balanced_accuracy": 0.6441,
+        "sensitivity": 0.8152,
+        "specificity": 0.4731
+      },
+      "extra_trees": {
+        "n_samples": 516,
+        "n_positive": 330,
+        "prevalence": 0.6395,
+        "roc_auc": 0.7685,
+        "pr_auc": 0.8538,
+        "brier_score": 0.1878,
+        "ece": 0.0657,
+        "f1": 0.8037,
+        "balanced_accuracy": 0.6288,
+        "sensitivity": 0.9242,
+        "specificity": 0.3333
+      },
+      "linear_qsar": {
+        "n_samples": 516,
+        "n_positive": 330,
+        "prevalence": 0.6395,
+        "roc_auc": 0.7327,
+        "pr_auc": 0.8162,
+        "brier_score": 0.1989,
+        "ece": 0.0566,
+        "f1": 0.7821,
+        "balanced_accuracy": 0.6633,
+        "sensitivity": 0.8212,
+        "specificity": 0.5054
+      },
+      "consensus_ensemble": {
+        "n_samples": 516,
+        "n_positive": 330,
+        "prevalence": 0.6395,
+        "roc_auc": 0.7664,
+        "pr_auc": 0.8506,
+        "brier_score": 0.1875,
+        "ece": 0.0541,
+        "f1": 0.7911,
+        "balanced_accuracy": 0.6457,
+        "sensitivity": 0.8667,
+        "specificity": 0.4247
+      }
+    }
+  },
+  "train_duration_sec": 489.7,
+  "clinical_benchmark": [
+    {
+      "name": "Terfenadine (Seldane)",
+      "clinical_class": "Withdrawn \u2014 hERG / Torsades de Pointes",
+      "expected_risk": "hERG High",
+      "smiles": "CC(C)(C)c1ccc(C(O)CCCN2CCC(C(O)(c3ccccc3)c3ccccc3)CC2)cc1",
+      "hERG_prob": 0.8464,
+      "hERG_std": 0.0966,
+      "CYP3A4_prob": 0.7224,
+      "CYP3A4_std": 0.1169,
+      "max_tanimoto": 1.0,
+      "domain_status": "In-Domain"
+    },
+    {
+      "name": "Astemizole (Hismanal)",
+      "clinical_class": "Withdrawn \u2014 Potent hERG Blocker (IC50 ~1 nM)",
+      "expected_risk": "hERG High",
+      "smiles": "COc1ccc(CCN2CCC(Nc3nc4ccccc4n3Cc3ccc(F)cc3)CC2)cc1",
+      "hERG_prob": 0.9666,
+      "hERG_std": 0.0257,
+      "CYP3A4_prob": 0.7128,
+      "CYP3A4_std": 0.0932,
+      "max_tanimoto": 1.0,
+      "domain_status": "In-Domain"
+    },
+    {
+      "name": "Cisapride (Propulsid)",
+      "clinical_class": "Withdrawn \u2014 hERG QT Prolongation",
+      "expected_risk": "hERG High",
+      "smiles": "COc1cc(N)c(Cl)cc1C(=O)NC1CCN(CCCOc2ccc(F)cc2)CC1OC",
+      "hERG_prob": 0.9151,
+      "hERG_std": 0.0601,
+      "CYP3A4_prob": 0.7863,
+      "CYP3A4_std": 0.0403,
+      "max_tanimoto": 1.0,
+      "domain_status": "In-Domain"
+    },
+    {
+      "name": "Ketoconazole",
+      "clinical_class": "FDA Index Strong CYP3A4 Inhibitor (Ki ~15 nM)",
+      "expected_risk": "CYP3A4 High",
+      "smiles": "CC(=O)N1CCN(c2ccc(OC[C@H]3CO[C@](Cn4ccnc4)(c4ccc(Cl)cc4Cl)O3)cc2)CC1",
+      "hERG_prob": 0.74,
+      "hERG_std": 0.1182,
+      "CYP3A4_prob": 0.9327,
+      "CYP3A4_std": 0.0821,
+      "max_tanimoto": 1.0,
+      "domain_status": "In-Domain"
+    },
+    {
+      "name": "Mibefradil (Posicor)",
+      "clinical_class": "Withdrawn \u2014 Mechanism-Based CYP3A4 DDI",
+      "expected_risk": "CYP3A4 + hERG High",
+      "smiles": "COCC(=O)O[C@]1(CCN(C)CCc2nc3ccccc3[nH]2)CCc2cc(F)ccc2[C@@H]1C(C)C",
+      "hERG_prob": 0.8161,
+      "hERG_std": 0.0655,
+      "CYP3A4_prob": 0.6081,
+      "CYP3A4_std": 0.032,
+      "max_tanimoto": 0.92,
+      "domain_status": "In-Domain"
+    },
+    {
+      "name": "Haloperidol",
+      "clinical_class": "Antipsychotic \u2014 Known hERG QT Liability",
+      "expected_risk": "hERG High",
+      "smiles": "O=C(CCCN1CCC(O)(c2ccc(Cl)cc2)CC1)c1ccc(F)cc1",
+      "hERG_prob": 0.8711,
+      "hERG_std": 0.0605,
+      "CYP3A4_prob": 0.4444,
+      "CYP3A4_std": 0.0924,
+      "max_tanimoto": 1.0,
+      "domain_status": "In-Domain"
+    },
+    {
+      "name": "Aspirin",
+      "clinical_class": "Safe Control \u2014 NSAID (No hERG/CYP3A4 Liability)",
+      "expected_risk": "Low Risk",
+      "smiles": "CC(=O)Oc1ccccc1C(=O)O",
+      "hERG_prob": 0.2681,
+      "hERG_std": 0.1068,
+      "CYP3A4_prob": 0.253,
+      "CYP3A4_std": 0.0729,
+      "max_tanimoto": 0.34,
+      "domain_status": "Borderline"
+    },
+    {
+      "name": "Caffeine",
+      "clinical_class": "Safe Control \u2014 Methylxanthine (CYP1A2 Substrate)",
+      "expected_risk": "Low Risk",
+      "smiles": "Cn1cnc2c1c(=O)n(C)c(=O)n2C",
+      "hERG_prob": 0.3059,
+      "hERG_std": 0.168,
+      "CYP3A4_prob": 0.2701,
+      "CYP3A4_std": 0.0871,
+      "max_tanimoto": 0.219,
+      "domain_status": "Out-of-Domain"
+    },
+    {
+      "name": "Acetaminophen",
+      "clinical_class": "Safe Control \u2014 Analgesic (No hERG/CYP3A4 Block)",
+      "expected_risk": "Low Risk",
+      "smiles": "CC(=O)Nc1ccc(O)cc1",
+      "hERG_prob": 0.3105,
+      "hERG_std": 0.1072,
+      "CYP3A4_prob": 0.3133,
+      "CYP3A4_std": 0.0966,
+      "max_tanimoto": 0.421,
+      "domain_status": "In-Domain"
+    },
+    {
+      "name": "Metformin",
+      "clinical_class": "Safe Control \u2014 Renally Cleared Biguanide",
+      "expected_risk": "Low Risk",
+      "smiles": "CN(C)C(=N)NC(=N)N",
+      "hERG_prob": 0.4203,
+      "hERG_std": 0.1812,
+      "CYP3A4_prob": 0.2269,
+      "CYP3A4_std": 0.1859,
+      "max_tanimoto": 0.136,
+      "domain_status": "Out-of-Domain"
+    }
+  ]
+}
