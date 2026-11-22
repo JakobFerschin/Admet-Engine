@@ -69,10 +69,11 @@
 }
 
 \pagestyle{fancy}
-\setlength{\headheight}{14pt}
+\setlength{\headheight}{16pt}
+\addtolength{\topmargin}{-2pt}
 \fancyhf{}
-\fancyhead[L]{\scriptsize\sffamily\color{MutedSlate}\textsc{ADMET-Engine v2.0 — Technical White Paper}}
-\fancyhead[R]{\scriptsize\sffamily\color{MutedSlate}\textsc{Scaffold-Validated Multi-Modal Safety Intelligence}}
+\fancyhead[L]{\scriptsize\sffamily\color{MutedSlate}\textsc{ADMET-Engine v2.0 — Preprint}}
+\fancyhead[R]{\scriptsize\sffamily\color{MutedSlate}\textsc{Scaffold-Validated Multi-Modal ADMET Prediction}}
 \fancyfoot[C]{\scriptsize\sffamily\color{MutedSlate}\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\headrule}{\hbox to\headwidth{\color{HarvardCrimson}\leaders\hrule height \headrulewidth\hfill}}
@@ -95,16 +96,16 @@
   \noindent\textcolor{HarvardCrimson}{\rule{\linewidth}{2.2pt}}
   \vspace{0.6em}
 
-  \noindent{\scriptsize\sffamily\bfseries\color{HarvardCrimson}\textsc{Computational Medicinal Chemistry \& Machine Learning Technical White Paper \hfill Version 2.0}}
+  \noindent{\scriptsize\sffamily\bfseries\color{HarvardCrimson}\textsc{Preprint \quad $\cdot$ \quad Computational Medicinal Chemistry \& Cheminformatics \hfill Release v2.0.0}}
   \vspace{0.45em}
 
   \noindent{\LARGE\bfseries\color{InkSlate} ADMET-Engine v2.0: Scaffold-Validated Multi-Modal Graph and QSAR Ensembling with Calibrated Epistemic Uncertainty, Applicability Domain Quantification, and Analytical Pharmacokinetics}
   \vspace{0.65em}
 
-  \noindent{\normalsize\color{InkSlate} Jakob Ferschin\textsuperscript{1}}
-  \vspace{0.25em}
+  \noindent{\normalsize\bfseries\color{InkSlate} Jakob Ferschin\textsuperscript{1}}
+  \vspace{0.22em}
 
-  \noindent{\footnotesize\color{MutedSlate}\textsuperscript{1}ADMET-Engine Research Project \quad $\cdot$ \quad Code \& Reproducible Artifacts: \href{https://github.com/JakobFerschin/Admet-Engine}{github.com/JakobFerschin/Admet-Engine}}
+  \noindent{\footnotesize\color{MutedSlate}\textsuperscript{1}Independent Researcher, Vienna, Austria \quad $\cdot$ \quad Code \& Release \texttt{v2.0.0}: \href{https://github.com/JakobFerschin/Admet-Engine}{github.com/JakobFerschin/Admet-Engine}}
   \vspace{0.7em}
 
   \noindent\textcolor{HairlineGray}{\rule{\linewidth}{0.6pt}}
@@ -112,7 +113,7 @@
 
   \begin{quote}
     \small\noindent\textbf{\color{InkSlate}Abstract.}
-    Late-stage attrition in small-molecule drug discovery remains disproportionately driven by off-target cardiotoxicity—chiefly human ether-\`{a}-go-go-related gene (\textsc{hERG}/K\textsubscript{v}11.1) potassium channel blockade—and hepatic cytochrome P450 3A4 (\textsc{CYP3A4}) drug–drug interactions. Although deep graph neural networks have proliferated in computational toxicology, deployed academic pipelines routinely suffer from four methodological failure modes: (i) random train/test partitioning that leaks congeneric chemical series across splits and inflates apparent \textsc{ROC-AUC}; (ii) uncalibrated raw neural logits misinterpreted as decision probabilities; (iii) absence of explicit applicability domain (\textsc{AD}) verification to warn medicinal chemists against out-of-distribution extrapolation; and (iv) disconnection from deterministic medicinal chemistry rules and structural alert filters. We present \textbf{ADMET-Engine v2.0}, an end-to-end computational medicinal chemistry platform trained on \textbf{16,270} unique standardized \textsc{ChEMBL} v37 compounds under a strict \textbf{Bemis–Murcko scaffold split} ($8{,}252$ unique core frameworks; zero core overlap across train, calibration-validation, and held-out test partitions). ADMET-Engine integrates four structurally heterogeneous model families—a Chemprop-grade $45$-dimensional one-hot Directed Message-Passing Neural Network (\textsc{DMPNN}) with an $O(E)$ reverse-edge indexing algorithm eliminating $O(N^2)$ batch memory blowup, a residual \textsc{ECFP4}+physicochemical deep neural network, an ExtraTrees non-linear \textsc{QSAR} ensemble, and an $L_2$-regularized logistic \textsc{QSAR} classifier—calibrated via validation-set temperature scaling and combined through convex negative log-likelihood optimization. On completely unseen core scaffolds ($n = 1{,}627$), the calibrated consensus ensemble achieves \textbf{ROC-AUC = 0.7836} (\textbf{PR-AUC = 0.8955}, \textbf{Brier = 0.1656}, \textbf{ECE = 0.0328}) on \textsc{hERG} ($n=1{,}177$) and \textbf{ROC-AUC = 0.7664} (\textbf{PR-AUC = 0.8506}, \textbf{Brier = 0.1875}, \textbf{ECE = 0.0541}) on \textsc{CYP3A4} ($n=516$), improving by $+0.216$ \textsc{ROC-AUC} over the prior unscaled scalar-feature baseline. Every inference further computes sub-millisecond bit-packed \textsc{ECFP4} Tanimoto applicability domain diagnostics, weighted epistemic uncertainty ($\sige$), exact analytical \textsc{BOILED-Egg} gastrointestinal and blood–brain barrier permeation, \textsc{QED}, $\mathrm{Fsp}^3$, Pfizer 3/75 promiscuity, and \textsc{PAINS}/\textsc{Brenk} toxicophore atom highlighting on 2D structures.
+    Late-stage attrition in small-molecule drug discovery remains disproportionately driven by off-target cardiotoxicity—chiefly human ether-\`{a}-go-go-related gene (\textsc{hERG}/K\textsubscript{v}11.1) potassium channel blockade—and hepatic cytochrome P450 3A4 (\textsc{CYP3A4}) drug–drug interactions. Although deep graph neural networks have proliferated in computational toxicology, deployed academic pipelines routinely suffer from four methodological failure modes: (i) random train/test partitioning that leaks congeneric chemical series across splits and inflates apparent \textsc{ROC-AUC}; (ii) uncalibrated raw neural logits misinterpreted as decision probabilities; (iii) absence of explicit applicability domain (\textsc{AD}) verification to warn medicinal chemists against out-of-distribution extrapolation; and (iv) disconnection from deterministic medicinal chemistry rules and structural alert filters. We present \textbf{ADMET-Engine v2.0}, an open-source computational medicinal chemistry framework trained on \textbf{16,270} unique standardized \textsc{ChEMBL} v37 compounds under a strict \textbf{Bemis–Murcko scaffold split} ($8{,}252$ unique core frameworks; zero core overlap across train, calibration-validation, and held-out test partitions). ADMET-Engine integrates four structurally heterogeneous model families—a Chemprop-grade $45$-dimensional one-hot Directed Message-Passing Neural Network (\textsc{DMPNN}) with an $O(E)$ reverse-edge indexing algorithm eliminating $O(N^2)$ batch memory blowup, a residual \textsc{ECFP4}+physicochemical deep neural network, an ExtraTrees non-linear \textsc{QSAR} ensemble, and an $L_2$-regularized logistic \textsc{QSAR} classifier—calibrated via validation-set temperature scaling and combined through convex negative log-likelihood optimization. On completely unseen core scaffolds ($n = 1{,}627$), the calibrated consensus ensemble achieves \textbf{ROC-AUC = 0.7836} (\textbf{PR-AUC = 0.8955}, \textbf{Brier = 0.1656}, \textbf{ECE = 0.0328}) on \textsc{hERG} ($n=1{,}177$) and \textbf{ROC-AUC = 0.7664} (\textbf{PR-AUC = 0.8506}, \textbf{Brier = 0.1875}, \textbf{ECE = 0.0541}) on \textsc{CYP3A4} ($n=516$), improving by $+0.216$ \textsc{ROC-AUC} over the prior unscaled scalar-feature baseline. Every inference further computes sub-millisecond bit-packed \textsc{ECFP4} Tanimoto applicability domain diagnostics, weighted epistemic uncertainty ($\sige$), exact analytical \textsc{BOILED-Egg} gastrointestinal and blood–brain barrier permeation, \textsc{QED}, $\mathrm{Fsp}^3$, Pfizer 3/75 promiscuity, and \textsc{PAINS}/\textsc{Brenk} toxicophore atom highlighting on 2D structures.
   \end{quote}
 
   \vspace{0.25em}
@@ -137,7 +138,7 @@ Computational \textsc{ADMET} prediction promises rapid virtual triage prior to c
   \item \textbf{Isolation from deterministic medicinal chemistry:} Neural toxicity scores are most actionable when paired side-by-side with exact physicochemical parameters (Wildman–Crippen $\mathrm{cLogP}$, Ertl \textsc{TPSA}, \textsc{QED}, $\mathrm{Fsp}^3$), analytical permeation models (\textsc{BOILED-Egg}), and substructure toxicophore filters (\textsc{PAINS}, \textsc{Brenk}) \citep{daina2016boiled,bickerton2012quantifying,baell2010new,brenk2008lessons}.
 \end{enumerate}
 
-In this white paper, we present \textbf{ADMET-Engine v2.0}, a vertically integrated computational medicinal chemistry platform engineered to resolve all four gaps simultaneously. Our primary contributions are:
+In this study, we present \textbf{ADMET-Engine v2.0}, an open-source computational medicinal chemistry framework engineered to resolve all four gaps simultaneously. Our primary contributions are:
 \begin{itemize}
   \item \textbf{Leakage-free Bemis–Murcko scaffold curation and evaluation} across $16{,}270$ unique standardized \textsc{ChEMBL} v37 compounds spanning $8{,}252$ core molecular frameworks, with zero scaffold overlap verified programmatically.
   \item \textbf{Algorithmic hardening and Chemprop-grade featurization of \textsc{DMPNN}}, replacing an $O(N^2)$ batched reverse-edge table with an $O(E)$ paired-edge indexing scheme (with an $O(E\log E)$ general fallback) and zero-edge safety for single-atom species, while upgrading node/edge encodings from unscaled scalars ($9/4$-dim) to one-hot chemical tensors ($45/10$-dim).
@@ -236,16 +237,16 @@ In ADMET-Engine v2.0 (\texttt{src/featurizer.py}), we implement a Chemprop-grade
   \item \textbf{Bond tensor ($\mathbb{R}^{10}$):} One-hot bond order $\{\text{single, double, triple, aromatic}\}$ ($4$), conjugation ($1$), ring membership ($1$), and $E/Z$/any stereochemistry ($4$).
 \end{itemize}
 
-Following \citet{yang2019analyzing}, directed edge states are initialized as $\mathbf{h}_{uv}^{(0)} = \operatorname{ReLU}(\mathbf{W}_i [\mathbf{x}_u \Vert \mathbf{e}_{uv}])$ and updated across $T = 3$ non-backtracking message-passing steps with hidden width $d = 160$ ($478{,}882$ trainable parameters):
+Following \citet{yang2019analyzing}, directed edge states are initialized as $\mathbf{h}_{u,v}^{(0)} = \operatorname{ReLU}(\mathbf{W}_i [\mathbf{x}_u \Vert \mathbf{e}_{u,v}])$ and updated across $T = 3$ non-backtracking message-passing steps with hidden width $d = 160$ ($478{,}882$ trainable parameters):
 \begin{align}
-  \mathbf{m}_{vw}^{(t+1)} &= \sum_{k \in \mathcal{N}(v) \setminus \{w\}} \mathbf{h}_{kv}^{(t)}
-  = \left(\sum_{k \in \mathcal{N}(v)} \mathbf{h}_{kv}^{(t)}\right) - \mathbf{h}_{wv}^{(t)}, \label{eq:dmpnn_msg}\\
-  \mathbf{h}_{vw}^{(t+1)} &= \operatorname{ReLU}\!\left(\mathbf{h}_{vw}^{(0)} + \mathbf{W}_m \mathbf{m}_{vw}^{(t+1)}\right), \label{eq:dmpnn_upd}
+  \mathbf{m}_{v,w}^{(t+1)} &= \sum_{k \in \mathcal{N}(v) \setminus \{w\}} \mathbf{h}_{k,v}^{(t)}
+  = \left(\sum_{k \in \mathcal{N}(v)} \mathbf{h}_{k,v}^{(t)}\right) - \mathbf{h}_{w,v}^{(t)}, \label{eq:dmpnn_msg}\\
+  \mathbf{h}_{v,w}^{(t+1)} &= \operatorname{ReLU}\!\left(\mathbf{h}_{v,w}^{(0)} + \mathbf{W}_m \mathbf{m}_{v,w}^{(t+1)}\right), \label{eq:dmpnn_upd}
 \end{align}
-followed by atom state aggregation $\mathbf{h}_v = \operatorname{ReLU}(\mathbf{W}_a [\mathbf{x}_v \Vert \sum_{k \in \mathcal{N}(v)} \mathbf{h}_{kv}^{(T)}])$, permutation-invariant \texttt{Set2Set} attention readout \citep{vinyals2016order} ($2$ processing steps $\to \mathbb{R}^{2d}$), and task-specific 2-layer \textsc{MLP} heads.
+followed by atom state aggregation $\mathbf{h}_v = \operatorname{ReLU}(\mathbf{W}_a [\mathbf{x}_v \Vert \sum_{k \in \mathcal{N}(v)} \mathbf{h}_{k,v}^{(T)}])$, permutation-invariant \texttt{Set2Set} attention readout \citep{vinyals2016order} ($2$ processing steps $\to \mathbb{R}^{2d}$), and task-specific 2-layer \textsc{MLP} heads.
 
 \begin{proposition}[Linear-Memory Reverse-Edge Indexing and Zero-Edge Safety]
-  Subtracting $\mathbf{h}_{wv}^{(t)}$ in Eq.~\eqref{eq:dmpnn_msg} requires a reverse-edge permutation $\pi : \{0,\dots,|\vec{\mathcal{E}}|-1\} \to \{0,\dots,|\vec{\mathcal{E}}|-1\}$ such that if edge $i = (u\!\to\!v)$, then $\pi(i) = (v\!\to\!u)$. Constructing $\pi$ via a dense node-pair lookup table allocates $\Theta(|\mathcal{V}|^2)$ integers—reaching $\approx 7.2\text{ GB}$ for a $1{,}000$-molecule batch ($|\mathcal{V}| \approx 3\times 10^4$). When directed edges are emitted as adjacent bidirectional pairs $(u\!\to\!v, v\!\to\!u)$, $\pi(i) = i \oplus 1$ (bitwise XOR with $1$) is exact in $O(|\vec{\mathcal{E}}|)$ time and $O(|\vec{\mathcal{E}}|)$ memory. For arbitrary edge permutations, sorting $64$-bit keys $k_i = u_i |\mathcal{V}| + v_i$ and applying binary search (\texttt{searchsorted}) computes $\pi$ in $O(|\vec{\mathcal{E}}|\log|\vec{\mathcal{E}}|)$ time and $O(|\vec{\mathcal{E}}|)$ memory. When $|\vec{\mathcal{E}}| = 0$ (e.g., monoatomic noble gases or isolated ions), setting $\sum_{k}\mathbf{h}_{kv}^{(T)} = \mathbf{0}$ preserves finite differentiable atom embeddings without tensor-reduction exceptions.
+  Subtracting $\mathbf{h}_{w,v}^{(t)}$ in Eq.~\eqref{eq:dmpnn_msg} requires a reverse-edge permutation $\pi : \{0,\dots,|\vec{\mathcal{E}}|-1\} \to \{0,\dots,|\vec{\mathcal{E}}|-1\}$ such that if edge $i = (u\!\to\!v)$, then $\pi(i) = (v\!\to\!u)$. Constructing $\pi$ via a dense node-pair lookup table allocates $\Theta(|\mathcal{V}|^2)$ integers—reaching $\approx 7.2\text{ GB}$ for a $1{,}000$-molecule batch ($|\mathcal{V}| \approx 3\times 10^4$). When directed edges are emitted as adjacent bidirectional pairs $(u\!\to\!v, v\!\to\!u)$, $\pi(i) = i \oplus 1$ (bitwise XOR with $1$) is exact in $O(|\vec{\mathcal{E}}|)$ time and $O(|\vec{\mathcal{E}}|)$ memory. For arbitrary edge permutations, sorting $64$-bit keys $k_i = u_i |\mathcal{V}| + v_i$ and applying binary search (\texttt{searchsorted}) computes $\pi$ in $O(|\vec{\mathcal{E}}|\log|\vec{\mathcal{E}}|)$ time and $O(|\vec{\mathcal{E}}|)$ memory. When $|\vec{\mathcal{E}}| = 0$ (e.g., monoatomic noble gases or isolated ions), setting $\sum_{k}\mathbf{h}_{k,v}^{(T)} = \mathbf{0}$ preserves finite differentiable atom embeddings without tensor-reduction exceptions.
 \end{proposition}
 
 \subsection{NaN-Masked Multi-Task Training Objective}
@@ -351,7 +352,7 @@ Four key empirical findings emerge from Table~\ref{tab:ablation}:
 \begin{enumerate}
   \item \textbf{Featurization drives graph learning:} Upgrading the \textsc{DMPNN} from raw $9/4$-dim scalars to $45/10$-dim one-hot chemical tensors raised \textsc{hERG} \textsc{ROC-AUC} from $0.5676$ (prior random-split baseline) to $0.7330$ on a strictly harder unseen-scaffold split ($+0.165$ \textsc{AUC}), while achieving the lowest single-model \textsc{hERG} calibration error ($\mathrm{ECE} = 0.0219$).
   \item \textbf{Complementarity of graph and fingerprint modalities:} On \textsc{hERG}, combining all four model families outperforms every individual member in \textsc{ROC-AUC} ($0.7836$, $+0.0097$ over ExtraTrees), \textsc{PR-AUC} ($0.8955$), and Brier score ($0.1656$). On the smaller \textsc{CYP3A4} subset ($n=516$), the consensus matches top discrimination ($\mathrm{ROC\text{-}AUC}=0.7664$) while achieving the lowest Brier score ($0.1875$) and tighter calibration than ExtraTrees alone ($\mathrm{ECE}=0.0541$ vs.\ $0.0657$).
-  \item \textbf{Sample-size sensitivity of GNNs:} Consistent with \citet{yang2019analyzing}, pure graph message passing lags circular-fingerprint models most noticeably in the lower-data \textsc{CYP3A4} regime ($4{,}500$ training labels vs.\ $9{,}000$ for \textsc{hERG}), which the validation-set optimizer naturally reflects by allocating $w_{\mathrm{DMPNN}}^* = 0.05$–$0.07$ and higher weight to \textsc{ECFP4-MLP} and ExtraTrees.
+  \item \textbf{Sample-size sensitivity of GNNs:} Consistent with \citet{yang2019analyzing}, pure graph message passing lags circular-fingerprint models most noticeably in the lower-data \textsc{CYP3A4} regime ($4{,}553$ labeled training compounds vs.\ $8{,}921$ for \textsc{hERG}), which the validation-set optimizer naturally reflects by allocating $w_{\mathrm{DMPNN}}^* = 0.05$–$0.07$ and higher weight to \textsc{ECFP4-MLP} and ExtraTrees.
   \item \textbf{Calibration discipline:} Temperature scaling compresses overconfident neural and logistic outputs into well-calibrated risk estimates across the full $[0, 1]$ range (Figure~\ref{fig:roc_pr_cal}c,f).
 \end{enumerate}
 
@@ -362,26 +363,28 @@ To verify whether our bit-packed \textsc{ECFP4} Tanimoto distance genuinely trac
   \centering
   \caption{\textbf{Applicability Domain Stratification on Unseen Scaffolds.} Held-out test performance and mean epistemic uncertainty ($\bar{\sigma}_{\mathrm{epi}}$) binned by maximum \textsc{ECFP4} Tanimoto similarity ($\Tmax$) to the training corpus. Both Brier error and $\bar{\sigma}_{\mathrm{epi}}$ decrease monotonically as similarity increases.}
   \label{tab:ad_strat}
-  \scriptsize
-  \setlength{\tabcolsep}{3.6pt}
+  \footnotesize
+  \setlength{\tabcolsep}{3.4pt}
+  \resizebox{\columnwidth}{!}{%
   \begin{tabular}{@{}lcccc@{}}
     \toprule
-    \textbf{AD Regime ($\Tmax$)} & \textbf{$n$} & \textbf{ROC-AUC} & \textbf{Brier $\downarrow$} & \textbf{$\bar{\sigma}_{\mathrm{epi}}$} \\
+    \textbf{AD Regime ($\Tmax$)} & $\mathbf{n}$ & \textbf{ROC-AUC} & \textbf{Brier $\downarrow$} & $\bar{\sigma}_{\mathrm{epi}}$ \\
     \midrule
-    \multicolumn{5}{@{}l}{\textit{hERG Channel Blockade (\textsc{KCNH2}, total $n=1{,}177$)}} \\
-    Out-of-Domain ($<0.25$)       & 8   & 0.7333\textsuperscript{\dag} & 0.2225 & 0.1070 \\
+    \multicolumn{5}{@{}l}{\textit{hERG Channel Blockade (KCNH2, total $n=1{,}177$)}} \\
+    Out-of-Domain ($<0.25$)       & 8   & $0.7333^{\dagger}$ & 0.2225 & 0.1070 \\
     Borderline ($0.25\text{--}0.40$) & 245 & 0.6790 & 0.2063 & 0.0814 \\
     In-Domain Mod. ($0.40\text{--}0.60$) & 262 & 0.7227 & 0.1937 & 0.0710 \\
     In-Domain High ($\ge 0.60$)   & 662 & \textbf{0.8381} & \textbf{0.1388} & \textbf{0.0617} \\
     \midrule
-    \multicolumn{5}{@{}l}{\textit{CYP3A4 Inhibition (\textsc{CHEMBL340}, total $n=516$)}} \\
-    Out-of-Domain ($<0.25$)       & 10  & 0.2381\textsuperscript{\dag} & 0.3197 & 0.0903 \\
+    \multicolumn{5}{@{}l}{\textit{CYP3A4 Inhibition (CHEMBL340, total $n=516$)}} \\
+    Out-of-Domain ($<0.25$)       & 10  & $0.2381^{\dagger}$ & 0.3197 & 0.0903 \\
     Borderline ($0.25\text{--}0.40$) & 156 & 0.6447 & 0.2327 & 0.0735 \\
     In-Domain Mod. ($0.40\text{--}0.60$) & 137 & 0.7811 & 0.1878 & 0.0710 \\
     In-Domain High ($\ge 0.60$)   & 213 & \textbf{0.8467} & \textbf{0.1481} & \textbf{0.0647} \\
     \bottomrule
-    \multicolumn{5}{@{}l}{\tiny\textsuperscript{\dag}Small-sample regime ($n\le 10$); high variance in rank AUC.}
-  \end{tabular}
+    \multicolumn{5}{@{}l}{\scriptsize$^{\dagger}$Small-sample regime ($n\le 10$); high variance in rank-based AUC.}
+  \end{tabular}%
+  }
 \end{table}
 
 \begin{figure*}[t]
@@ -435,11 +438,11 @@ Two methodological subtleties merit explicit academic transparency. First, becau
 % ============================================================================
 \section{Software Architecture and Verification}
 % ============================================================================
-ADMET-Engine v2.0 is deployed as a modular, reproducible full-stack platform:
+ADMET-Engine v2.0 is implemented as a modular, reproducible open-source framework:
 \begin{itemize}
   \item \textbf{Inference Server (\texttt{src/api/main.py}):} Built on FastAPI with lifespan-managed singleton model loading, Pydantic v2 batch validation ($1$–$1{,}000$ \textsc{SMILES} per call with per-molecule error isolation), spec-compliant \textsc{CORS}, and three endpoints: \texttt{GET /health}, \texttt{GET /model/metadata} (serving live scaffold ablation tables), and \texttt{POST /predict/admet}.
-  \item \textbf{Academic Workbench (\texttt{frontend/}):} React~19 + TypeScript + Vite interface styled for high-density scientific review, featuring curated clinical presets, 2D \textsc{RDKit} \textsc{SVG} structure plates with \textsc{PAINS}/\textsc{Brenk} highlighting, calibrated probability bars with $95\%$ epistemic whiskers, interactive \textsc{BOILED-Egg} mapping, 2-compound multiparameter optimization (\textsc{MPO}) overlays, client-side \textsc{PDF} dossier export, and a dedicated \textit{Validation \& Methods} view.
-  \item \textbf{Automated Verification (\texttt{tests/}):} An $83$-test \texttt{pytest} suite validates \textsc{RDKit} standardization idempotency, \textsc{ChEMBL} \textsc{ETL} pChEMBL conversion, \textsc{DMPNN} gradient flow and $O(E)$/single-atom edge cases, deterministic cheminformatics accuracy (\textsc{BOILED-Egg}, Pfizer 3/75, \textsc{PAINS}), training convergence, and live \textsc{API} integration ($83/83$ passing in $23.6\text{ s}$).
+  \item \textbf{Academic Workbench (\texttt{frontend/}):} React~19 + TypeScript + Vite interface designed for high-density scientific inspection, featuring curated clinical presets, 2D \textsc{RDKit} \textsc{SVG} structure plates with \textsc{PAINS}/\textsc{Brenk} highlighting, calibrated probability bars with $95\%$ epistemic whiskers, interactive \textsc{BOILED-Egg} mapping, 2-compound multiparameter optimization (\textsc{MPO}) overlays, client-side \textsc{PDF} dossier export, and a dedicated \textit{Validation \& Methods} view.
+  \item \textbf{Reproducibility and Automated Verification (\texttt{tests/}):} All training and benchmarking runs were executed deterministically (random seed $42$; wall-clock CPU training time $489.7\text{ s}$) under Python~3.12, PyTorch~2.15, PyTorch Geometric~2.8.1, RDKit~2026.9.2, and scikit-learn~1.9.1. An $83$-test \texttt{pytest} suite validates \textsc{RDKit} standardization idempotency, \textsc{ChEMBL} \textsc{ETL} pChEMBL conversion, \textsc{DMPNN} gradient flow and $O(E)$/single-atom edge cases, deterministic cheminformatics accuracy (\textsc{BOILED-Egg}, Pfizer 3/75, \textsc{PAINS}), training convergence, and live \textsc{API} integration ($83/83$ passing in $23.6\text{ s}$).
 \end{itemize}
 
 % ============================================================================
@@ -456,7 +459,21 @@ Rigorous deployment in medicinal chemistry requires explicit acknowledgment of c
 % ============================================================================
 \section{Conclusion}
 % ============================================================================
-We have presented \textbf{ADMET-Engine v2.0}, demonstrating how rigorous Bemis–Murcko scaffold validation, $O(E)$-hardened one-hot \textsc{DMPNN} graph learning, multi-modal \textsc{QSAR} ensembling, post-hoc temperature calibration, bit-packed Tanimoto applicability domains, and deterministic medicinal chemistry profiling can be unified into an open, reproducible scientific platform. By coupling competitive unseen-scaffold discrimination ($\mathrm{ROC\text{-}AUC} = 0.7836$ on \textsc{hERG}, $0.7664$ on \textsc{CYP3A4}) with transparent epistemic uncertainty ($\mathrm{ECE} \le 0.054$) and immediate structural interpretability, ADMET-Engine v2.0 establishes a disciplined template for trustworthy machine learning in preclinical drug discovery.
+We have presented \textbf{ADMET-Engine v2.0}, demonstrating how rigorous Bemis–Murcko scaffold validation, $O(E)$-hardened one-hot \textsc{DMPNN} graph learning, multi-modal \textsc{QSAR} ensembling, post-hoc temperature calibration, bit-packed Tanimoto applicability domains, and deterministic medicinal chemistry profiling can be unified into an open, reproducible scientific platform. By coupling competitive unseen-scaffold discrimination ($\mathrm{ROC\text{-}AUC} = 0.7836$ on \textsc{hERG}, $0.7664$ on \textsc{CYP3A4}; rising to $0.838$–$0.847$ at $\Tmax \ge 0.60$) with transparent epistemic uncertainty ($\mathrm{ECE} \le 0.054$) and immediate structural interpretability, ADMET-Engine v2.0 establishes a disciplined template for trustworthy machine learning in preclinical drug discovery.
+
+% ============================================================================
+\section*{Statements and Declarations}
+% ============================================================================
+\noindent\textbf{Data and Code Availability.}
+Bioactivity data were curated from the publicly available \textsc{ChEMBL} database (release v37, EMBL-EBI; \url{https://www.ebi.ac.uk/chembl/}). All source code, trained model weights, Bemis–Murcko scaffold evaluation scripts, unit tests, and figure-generation scripts corresponding to this preprint are openly archived under the MIT License at \url{https://github.com/JakobFerschin/Admet-Engine} (pinned release tag \texttt{v2.0.0}).
+
+\medskip
+\noindent\textbf{Conflicts of Interest.}
+The author declares no competing financial or non-financial interests.
+
+\medskip
+\noindent\textbf{Research Scope and Non-Clinical Disclaimer.}
+ADMET-Engine v2.0 is strictly an \textit{in silico} computational research and educational tool intended for early-stage preclinical compound prioritization and hypothesis generation. It is not a medical device, does not constitute regulatory safety qualification, and must not be used for clinical decision-making, diagnosis, or human dosing without independent experimental pharmacological and toxicological validation.
 
 \bibliographystyle{unsrtnat}
 \bibliography{references}

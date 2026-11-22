@@ -1,8 +1,8 @@
 # ADMET-Engine
 
-**Computational Medicinal Chemistry & Preclinical Safety Workbench** — a full-stack ADMET prediction platform combining a scaffold-validated **ChEMBL v37 Multi-Modal Ensemble** (45-dim one-hot Chemprop DMPNN + Residual ECFP4/PhysChem Deep Network + ExtraTrees QSAR + L2 Logistic QSAR) with deterministic RDKit cheminformatics, Tanimoto Applicability Domain assessment, and an academic React/TypeScript workbench.
+**Computational Medicinal Chemistry & Preclinical Safety Workbench** — an open-source ADMET prediction platform combining a scaffold-validated **ChEMBL v37 Multi-Modal Ensemble** (45-dim one-hot Chemprop DMPNN + Residual ECFP4/PhysChem Deep Network + ExtraTrees QSAR + L2 Logistic QSAR) with deterministic RDKit cheminformatics, Tanimoto Applicability Domain assessment, and an academic React/TypeScript workbench.
 
-> **Technical White Paper:** [`paper/admet_engine_whitepaper.pdf`](paper/admet_engine_whitepaper.pdf) (LaTeX source & reproducible figures in [`paper/`](paper/))
+> **Preprint (ChemRxiv-ready, Release `v2.0.0`):** [`paper/admet_engine_preprint.pdf`](paper/admet_engine_preprint.pdf) · LaTeX source & reproducible figures in [`paper/`](paper/) · **License:** [MIT](LICENSE)
 
 ---
 
@@ -121,7 +121,25 @@ docs/                              # Computational methodology & project status 
 
 ---
 
-## Documentation
+## Documentation & Preprint
 
+- **Preprint PDF & LaTeX Source:** [`paper/admet_engine_preprint.pdf`](paper/admet_engine_preprint.pdf) ([`paper/`](paper/))
 - **Computational Methodology & Literature Basis:** [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md)
 - **Historical Status Report:** [`docs/STATUS_REPORT.md`](docs/STATUS_REPORT.md)
+
+## Citation
+
+If you use ADMET-Engine v2.0 in academic work, please cite the ChemRxiv preprint and pinned release `v2.0.0`:
+
+```bibtex
+@misc{ferschin2026admetengine,
+  author = {Ferschin, Jakob},
+  title  = {ADMET-Engine v2.0: Scaffold-Validated Multi-Modal Graph and QSAR Ensembling with Calibrated Epistemic Uncertainty, Applicability Domain Quantification, and Analytical Pharmacokinetics},
+  year   = {2026},
+  note   = {Preprint; Code release v2.0.0 available at https://github.com/JakobFerschin/Admet-Engine}
+}
+```
+
+## License & Research Disclaimer
+
+Released under the **[MIT License](LICENSE)**. ADMET-Engine is strictly an *in silico* computational research and educational tool for early-stage preclinical prioritization; it is not a medical device and must not be used for clinical decision-making or human dosing without experimental validation.

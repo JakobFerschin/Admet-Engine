@@ -371,16 +371,16 @@ def plot_fig3_boiled_egg_clinical(test_mols: list, metadata: dict):
 
     bench = metadata["clinical_benchmark"]
     label_offsets = {
-        "Terfenadine": (6, 3),
-        "Astemizole": (-50, 5),
-        "Cisapride": (6, -9),
-        "Ketoconazole": (6, 5),
+        "Terfenadine": (7, 4),
+        "Astemizole": (-54, 4),
+        "Cisapride": (7, -9),
+        "Ketoconazole": (7, 5),
         "Mibefradil": (7, 4),
-        "Haloperidol": (-44, 6),
-        "Aspirin": (6, -8),
-        "Caffeine": (6, -4),
-        "Acetaminophen": (-56, -3),
-        "Metformin": (-12, 8),
+        "Haloperidol": (-48, 5),
+        "Aspirin": (7, -8),
+        "Caffeine": (7, -4),
+        "Acetaminophen": (-60, -3),
+        "Metformin": (-12, 9),
     }
 
     for row in bench:
@@ -406,6 +406,7 @@ def plot_fig3_boiled_egg_clinical(test_mols: list, metadata: dict):
             fontsize=6.8,
             fontweight="bold" if is_toxic else "normal",
             color="#0F172A",
+            bbox=dict(boxstyle="round,pad=0.10", facecolor="white", edgecolor="none", alpha=0.82),
             zorder=6,
         )
 
