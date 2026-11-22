@@ -39,3 +39,14 @@ config/mcporter.json
 # Frontend Build Artifacts
 frontend/node_modules/
 frontend/dist/
+
+# LaTeX Auxiliary Files (keep .tex, .bib, figures/*.pdf and final whitepaper PDF)
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.fls
+paper/*.fdb_latexmk
+paper/preview/

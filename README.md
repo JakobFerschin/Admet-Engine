@@ -2,6 +2,8 @@
 
 **Computational Medicinal Chemistry & Preclinical Safety Workbench** — a full-stack ADMET prediction platform combining a scaffold-validated **ChEMBL v37 Multi-Modal Ensemble** (45-dim one-hot Chemprop DMPNN + Residual ECFP4/PhysChem Deep Network + ExtraTrees QSAR + L2 Logistic QSAR) with deterministic RDKit cheminformatics, Tanimoto Applicability Domain assessment, and an academic React/TypeScript workbench.
 
+> **Technical White Paper:** [`paper/admet_engine_whitepaper.pdf`](paper/admet_engine_whitepaper.pdf) (LaTeX source & reproducible figures in [`paper/`](paper/))
+
 ---
 
 ## Scientific Highlights
