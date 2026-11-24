@@ -406,3 +406,13 @@ CIPA_28_DRUGS: list[CiPADrug] = [
 def get_cipa28_dataframe() -> pd.DataFrame:
     """Return the official 28 FDA-CiPA drugs as a structured DataFrame."""
     return pd.DataFrame([asdict(d) for d in CIPA_28_DRUGS])
+
+
+def get_cipa28_drug(name: str) -> CiPADrug:
+    """Case-insensitive lookup of a reference drug in the FDA-CiPA 28 panel."""
+    key = name.strip().lower()
+    for drug in CIPA_28_DRUGS:
+        if drug.name.lower() == key:
+            return drug
+    raise KeyError(f"Drug '{name}' not found in FDA-CiPA 28 panel.")
+
