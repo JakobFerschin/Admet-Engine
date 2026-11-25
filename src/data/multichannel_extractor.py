@@ -243,32 +243,78 @@ def extract_from_sqlite(
 def extract_from_rest_api(
     max_per_target: Optional[int] = None,
     page_size: int = 1000,
-    timeout: int = 30,
+    timeout: int = 60,
+    max_retries: int = 5,
+    backoff_base: float = 2.0,
 ) -> list[dict[str, Any]]:
     """
     Download curated hERG, Cav1.2, and Nav1.5 bioactivities directly from the
     official EMBL-EBI ChEMBL REST API, preserving censored relations ('=', '>', '<').
+    Includes exponential-backoff retries for transient HTTP 429/5xx and timeout errors.
     Ideal for stateless Google Colab GPU instances.
     """
     session = requests.Session()
+    session.headers.update({
+        "Accept": "application/json",
+        "User-Agent": "ADMET-Engine-CardioPhys3D/3.0 (research; https://github.com/JakobFerschin/Admet-Engine)",
+    })
     all_rows: list[dict[str, Any]] = []
+    retryable_status = {429, 500, 502, 503, 504}
+
+    def _fetch_page(params: dict[str, Any]) -> dict[str, Any]:
+        last_err: Optional[Exception] = None
+        for attempt in range(1, max_retries + 1):
+            try:
+                resp = session.get(CHEMBL_REST_URL, params=params, timeout=timeout)
+                if resp.status_code in retryable_status:
+                    retry_after = resp.headers.get("Retry-After")
+                    wait_s = (
+                        float(retry_after)
+                        if retry_after and retry_after.replace(".", "", 1).isdigit()
+                        else backoff_base ** attempt
+                    )
+                    wait_s = min(wait_s, 60.0)
+                    log.warning(
+                        "ChEMBL API HTTP %d (attempt %d/%d); retrying in %.1fs...",
+                        resp.status_code, attempt, max_retries, wait_s,
+                    )
+                    time.sleep(wait_s)
+                    continue
+                resp.raise_for_status()
+                return resp.json()
+            except (requests.exceptions.RequestException, ValueError) as exc:
+                last_err = exc
+                if attempt == max_retries:
+                    break
+                wait_s = min(backoff_base ** attempt, 60.0)
+                log.warning(
+                    "ChEMBL API request error (%s, attempt %d/%d); retrying in %.1fs...",
+                    type(exc).__name__, attempt, max_retries, wait_s,
+                )
+                time.sleep(wait_s)
+        raise RuntimeError(f"ChEMBL REST API failed after {max_retries} attempts: {last_err}")
 
     for channel_name, chembl_id in CARDIAC_TARGETS.items():
         log.info("Fetching %s (%s) from ChEMBL REST API...", channel_name, chembl_id)
         fetched = 0
         offset = 0
         while True:
+            page_limit = page_size
+            if max_per_target is not None:
+                remaining = max_per_target - fetched
+                if remaining <= 0:
+                    break
+                page_limit = min(page_size, max(remaining, 100))
+
             params = {
                 "target_chembl_id": chembl_id,
                 "standard_type__in": ",".join(RELEVANT_STANDARD_TYPES),
                 "standard_value__isnull": "false",
                 "standard_units__isnull": "false",
-                "limit": page_size,
+                "limit": page_limit,
                 "offset": offset,
             }
-            resp = session.get(CHEMBL_REST_URL, params=params, timeout=timeout)
-            resp.raise_for_status()
-            payload = resp.json()
+            payload = _fetch_page(params)
             activities = payload.get("activities", [])
             if not activities:
                 break
@@ -292,14 +338,17 @@ def extract_from_rest_api(
                     "pchembl_value": act.get("pchembl_value"),
                 })
                 fetched += 1
+                if max_per_target is not None and fetched >= max_per_target:
+                    break
 
             offset += len(activities)
-            total = payload.get("page_meta", {}).get("total_count", 0)
-            log.info("  [%s] %d / %d records fetched", channel_name, offset, total)
+            page_meta = payload.get("page_meta", {}) or {}
+            total = page_meta.get("total_count", 0)
+            log.info("  [%s] %d kept (%d / %d scanned)", channel_name, fetched, offset, total)
 
             if max_per_target is not None and fetched >= max_per_target:
                 break
-            if not payload.get("page_meta", {}).get("next"):
+            if not page_meta.get("next") or (total and offset >= total):
                 break
 
     log.info("Total fetched from ChEMBL REST API: %d rows", len(all_rows))
@@ -342,7 +391,7 @@ def build_multichannel_dataset(
 
         try:
             mol = standardize_molecule(str(row["canonical_smiles"]))
-        except (ValueError, RuntimeError):
+        except Exception:
             failed += 1
             continue
         if mol is None or mol.GetNumAtoms() == 0:
@@ -373,9 +422,14 @@ def build_multichannel_dataset(
                 rec[f"{ch}_n_obs"] = 0
         records.append(rec)
 
+    if not records:
+        cols = ["canonical_smiles", "murcko_scaffold"]
+        for ch in CARDIAC_TARGETS:
+            cols.extend([f"{ch}_pIC50", f"{ch}_censor", f"{ch}_n_obs"])
+        cols.append("split")
+        return pd.DataFrame(columns=cols)
+
     df = pd.DataFrame(records)
-    if df.empty:
-        return df
 
     # Deterministic Bemis-Murcko Scaffold Split across all 3 channels jointly
     scaf_groups: dict[str, list[int]] = defaultdict(list)

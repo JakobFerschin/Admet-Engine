@@ -104,7 +104,10 @@ def protonate_at_ph74(mol: Chem.Mol) -> Chem.Mol:
     for _, rxn in _COMPILED_PH74_RXNS:
         # Apply iteratively until no more sites match (capped at 6 ionizable sites)
         for _ in range(6):
-            products = rxn.RunReactants((curr,))
+            try:
+                products = rxn.RunReactants((curr,))
+            except Exception:
+                break
             if not products:
                 break
             cand = products[0][0]
@@ -149,13 +152,23 @@ def compute_boltzmann_weights(
     temperature_k: float = PHYSIOLOGICAL_TEMP_K,
 ) -> np.ndarray:
     """Compute numerically stable Boltzmann probabilities at `temperature_k`."""
-    if len(energies_kcal) == 0:
+    energies_arr = np.asarray(energies_kcal, dtype=np.float64)
+    if energies_arr.size == 0:
         return np.array([], dtype=np.float32)
+    if not np.isfinite(energies_arr).all():
+        finite_mask = np.isfinite(energies_arr)
+        if not finite_mask.any():
+            return np.full(energies_arr.shape, 1.0 / energies_arr.size, dtype=np.float32)
+        fill_val = float(np.max(energies_arr[finite_mask])) + 50.0
+        energies_arr = np.where(finite_mask, energies_arr, fill_val)
     rt = R_KCAL_MOL_K * temperature_k
-    rel_e = energies_kcal - np.min(energies_kcal)
+    rel_e = energies_arr - np.min(energies_arr)
     logits = np.clip(-rel_e / rt, -60.0, 0.0)
     weights = np.exp(logits)
-    weights /= np.sum(weights)
+    total = float(np.sum(weights))
+    if not math.isfinite(total) or total <= 0.0:
+        return np.full(energies_arr.shape, 1.0 / energies_arr.size, dtype=np.float32)
+    weights /= total
     return weights.astype(np.float32)
 
 
@@ -167,6 +180,8 @@ def generate_3d_ensemble(
     protonate: bool = True,
     include_hydrogens: bool = False,
     seed: int = 42,
+    num_threads: int = 1,
+    max_heavy_atoms: int = 120,
 ) -> Optional[ConformerEnsemble3D]:
     """
     Generate a pH-7.4-protonated, MMFF94(s)-minimized, Boltzmann-weighted
@@ -181,76 +196,107 @@ def generate_3d_ensemble(
         include_hydrogens: If False, strip hydrogens after 3D minimization to keep
                            heavy-atom graphs compact for SE(3) message passing.
         seed:              Deterministic ETKDGv3 RNG seed.
+        num_threads:       RDKit C++ threads per molecule (default 1 to prevent thread
+                           oversubscription/deadlocks inside joblib.Parallel).
+        max_heavy_atoms:   Skip giant macromolecules/peptides above this heavy-atom
+                           threshold to prevent ETKDGv3/MMFF hangs.
     """
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None or mol.GetNumAtoms() == 0:
+    if not isinstance(smiles, str) or not smiles.strip():
         return None
 
-    if protonate:
-        mol = protonate_at_ph74(mol)
-
-    smi_ph74 = Chem.MolToSmiles(mol, canonical=True)
-    net_charge = int(Chem.GetFormalCharge(mol))
-
-    # Add explicit hydrogens for accurate 3D geometry & MMFF94 energetics
-    mol_h = Chem.AddHs(mol)
-    params = AllChem.ETKDGv3()
-    params.randomSeed = seed
-    params.pruneRmsThresh = prune_rms_thresh
-    params.useSmallRingTorsions = True
-    params.numThreads = 0  # use available cores when called sequentially
-
-    conf_ids = list(AllChem.EmbedMultipleConfs(mol_h, numConfs=num_confs, params=params))
-    if not conf_ids:
-        # Fallback with random coordinates for macrocycles / strained cages
-        params.useRandomCoords = True
-        conf_ids = list(AllChem.EmbedMultipleConfs(mol_h, numConfs=max(1, num_confs // 2), params=params))
-        if not conf_ids:
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None or mol.GetNumAtoms() == 0 or mol.GetNumHeavyAtoms() > max_heavy_atoms:
             return None
 
-    # Force-field energy minimization: prefer MMFF94s, fall back to UFF
-    energies: list[float] = []
-    if AllChem.MMFFHasAllMoleculeParams(mol_h):
-        mmff_props = AllChem.MMFFGetMoleculeProperties(mol_h, mmffVariant="MMFF94s")
-        for cid in conf_ids:
-            ff = AllChem.MMFFGetMoleculeForceField(mol_h, mmff_props, confId=cid)
-            if ff is not None:
-                ff.Minimize(maxIts=max_iters)
-                energies.append(float(ff.CalcEnergy()))
-            else:
-                energies.append(0.0)
-    else:
-        for cid in conf_ids:
-            ff = AllChem.UFFGetMoleculeForceField(mol_h, confId=cid)
-            if ff is not None:
-                ff.Minimize(maxIts=max_iters)
-                energies.append(float(ff.CalcEnergy()))
-            else:
-                energies.append(0.0)
+        if protonate:
+            mol = protonate_at_ph74(mol)
+            if mol is None or mol.GetNumAtoms() == 0:
+                return None
 
-    out_mol = mol_h if include_hydrogens else Chem.RemoveHs(mol_h)
-    order = np.argsort(energies)
-    sorted_cids = [conf_ids[i] for i in order]
-    sorted_energies = np.array([energies[i] for i in order], dtype=np.float32)
+        smi_ph74 = Chem.MolToSmiles(mol, canonical=True)
+        net_charge = int(Chem.GetFormalCharge(mol))
 
-    # Extract 3D coordinate array [K, N, 3] centered at origin
-    n_atoms = out_mol.GetNumAtoms()
-    coords = np.zeros((len(sorted_cids), n_atoms, 3), dtype=np.float32)
-    for k, cid in enumerate(sorted_cids):
-        conf = out_mol.GetConformer(cid)
-        pos_k = np.array(conf.GetPositions(), dtype=np.float32)
-        coords[k] = pos_k - pos_k.mean(axis=0, keepdims=True)
+        # Add explicit hydrogens for accurate 3D geometry & MMFF94 energetics
+        mol_h = Chem.AddHs(mol)
+        params = AllChem.ETKDGv3()
+        params.randomSeed = seed
+        params.pruneRmsThresh = prune_rms_thresh
+        params.useSmallRingTorsions = True
+        params.numThreads = int(num_threads)
 
-    atomic_nums = np.array([a.GetAtomicNum() for a in out_mol.GetAtoms()], dtype=np.int64)
-    formal_charges = np.array([a.GetFormalCharge() for a in out_mol.GetAtoms()], dtype=np.int8)
-    boltz_w = compute_boltzmann_weights(sorted_energies)
+        conf_ids = list(AllChem.EmbedMultipleConfs(mol_h, numConfs=num_confs, params=params))
+        if not conf_ids:
+            # Fallback with random coordinates for macrocycles / strained cages
+            params.useRandomCoords = True
+            conf_ids = list(AllChem.EmbedMultipleConfs(mol_h, numConfs=max(1, num_confs // 2), params=params))
+            if not conf_ids:
+                return None
 
-    return ConformerEnsemble3D(
-        canonical_smiles_ph74=smi_ph74,
-        atomic_numbers=atomic_nums,
-        formal_charges=formal_charges,
-        positions=coords,
-        energies_kcal=sorted_energies,
-        boltzmann_weights=boltz_w,
-        net_charge_ph74=net_charge,
-    )
+        # Force-field energy minimization: prefer MMFF94s, fall back to UFF
+        energies: list[float] = []
+        mmff_props = None
+        if AllChem.MMFFHasAllMoleculeParams(mol_h):
+            mmff_props = AllChem.MMFFGetMoleculeProperties(mol_h, mmffVariant="MMFF94s")
+
+        if mmff_props is not None:
+            for cid in conf_ids:
+                try:
+                    ff = AllChem.MMFFGetMoleculeForceField(mol_h, mmff_props, confId=cid)
+                    if ff is not None:
+                        ff.Minimize(maxIts=max_iters)
+                        e = float(ff.CalcEnergy())
+                        energies.append(e if math.isfinite(e) else 0.0)
+                    else:
+                        energies.append(0.0)
+                except Exception:
+                    energies.append(0.0)
+        else:
+            for cid in conf_ids:
+                try:
+                    ff = AllChem.UFFGetMoleculeForceField(mol_h, confId=cid)
+                    if ff is not None:
+                        ff.Minimize(maxIts=max_iters)
+                        e = float(ff.CalcEnergy())
+                        energies.append(e if math.isfinite(e) else 0.0)
+                    else:
+                        energies.append(0.0)
+                except Exception:
+                    energies.append(0.0)
+
+        out_mol = mol_h if include_hydrogens else Chem.RemoveHs(mol_h)
+        if out_mol is None or out_mol.GetNumAtoms() == 0:
+            return None
+
+        order = np.argsort(energies)
+        valid_coords: list[np.ndarray] = []
+        valid_energies: list[float] = []
+        for idx in order:
+            cid = conf_ids[int(idx)]
+            conf = out_mol.GetConformer(cid)
+            pos_k = np.array(conf.GetPositions(), dtype=np.float32)
+            if not np.isfinite(pos_k).all():
+                continue
+            valid_coords.append(pos_k - pos_k.mean(axis=0, keepdims=True))
+            valid_energies.append(float(energies[int(idx)]))
+
+        if not valid_coords:
+            return None
+
+        coords = np.stack(valid_coords, axis=0)
+        sorted_energies = np.array(valid_energies, dtype=np.float32)
+        atomic_nums = np.array([a.GetAtomicNum() for a in out_mol.GetAtoms()], dtype=np.int64)
+        formal_charges = np.array([a.GetFormalCharge() for a in out_mol.GetAtoms()], dtype=np.int8)
+        boltz_w = compute_boltzmann_weights(sorted_energies)
+
+        return ConformerEnsemble3D(
+            canonical_smiles_ph74=smi_ph74,
+            atomic_numbers=atomic_nums,
+            formal_charges=formal_charges,
+            positions=coords,
+            energies_kcal=sorted_energies,
+            boltzmann_weights=boltz_w,
+            net_charge_ph74=net_charge,
+        )
+    except Exception:
+        return None
